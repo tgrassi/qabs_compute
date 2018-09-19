@@ -18,7 +18,7 @@ def load_eps(fname, labs=["wlen", "real_eps1", "im_eps", "real_m1", "im_m"], rev
     data = {lab:[] for lab in labs}
     # loop on file to read
     for row in open(fname, "rb"):
-        srow = row.strip()
+        srow = row.strip().replace("\t", " ")
         if row.startswith("#") or srow == "":
             continue
         arow = [float(x) for x in srow.split(" ") if x != ""]

@@ -23,6 +23,6 @@ plt.loglog(data_qref["wlen"], data_qref["qsca"], ":", label="$Q_{sca}$ Draine")
 plt.xlabel("$\\lambda / \\mu$m")
 plt.ylabel("$Q_{sca}$ or $Q_{abs}$")
 plt.legend(loc="best")
-plt.savefig("output.png")
+plt.savefig("test_01.png")
 
 
