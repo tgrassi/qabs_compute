@@ -34,11 +34,13 @@ import matplotlib.pyplot as plt
 # load refractive index data from file
 data_eps = load_eps("your_file.dat", labs=["wlen", "real_eps", "im_eps"])
 ```
+The file could be both space- or tab-separated.    
+
 labs are     
-wlen: wavelength in micron     
-real_eps1: real part of dialectric - 1    
-real_eps: real part of dialectric    
-im_eps: imaginary part of dielectric     
-real_m1: real part of refractive index - 1     
-real_m: real part of refractive index     
-im_m: imaginary part of refractive index
+`wlen`: wavelength in micron     
+`real_eps1`: real part of dialectric - 1    
+`real_eps`: real part of dialectric    
+`im_eps`: imaginary part of dielectric     
+`real_m1`: real part of refractive index - 1     
+`real_m`: real part of refractive index     
+`im_m`: imaginary part of refractive index
