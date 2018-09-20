@@ -10,6 +10,7 @@ class Qabs_utils:
         self.data_ref = dict()
         self.data_q = dict()
         self.ptype_default = None
+        self.data_k = dict()
 
         self.constants = {"clight": 2.99792458e10,
                           "hplanck_eV*s": 4.135667662e-15}
@@ -27,7 +28,7 @@ class Qabs_utils:
     # Note: you only need wlen, real_m (or real_m1), and im_m
     # Use reverse if wavelengths are stored as energies (high to low)
     # Returns a dictionary of numpy arrays with keys as labs
-    def load_eps(self, fname, labs=None, reverse=False):
+    def load_eps(self, fname, labs=None, reverse=True):
         import sys
 
         # empty data
@@ -121,6 +122,46 @@ class Qabs_utils:
         self.plot(what=["real_m", "im_m", "real_m_computed", "im_m_computed"],
                   fname="benchmark_m.png", styles=["-", "-", ":", ":"])
 
+        # compute opacity
+        self.compute_kappa()
+        self.plot(what=["kappa"], fname="benchmark_kappa.png")
+
+    # *****************
+    # compute opacity (cross section per dust mass), cm2/g
+    def compute_kappa(self, amin=5e-7, amax=2.5e-5, pexp=-3.5, rho_bulk=2.9):
+
+        pexp4 = pexp + 4.
+        ngrid = 30  # number of size grid points
+
+        # size range, cm
+        arange = np.logspace(np.log10(amin), np.log10(amax), ngrid)
+
+        qdata = []
+        # loop on sizes
+        for ii, asize in enumerate(arange):
+            print round(ii*1e2 / (ngrid - 1), 1), "%"
+            self.compute_q(asize)
+            qabs = self.data_q["qabs"]
+            qdata.append(qabs)
+        qdata = np.array(qdata).T
+
+        # size distribution
+        phi = arange**pexp
+
+        # normalized mass
+        cnorm = 4./3. * np.pi * rho_bulk * (amax**pexp4 - amin**pexp4) / pexp4
+        icnorm = 1e0 / cnorm
+
+        kappa = []
+        # loop to compute integral
+        for q in qdata:
+            kappa.append(np.pi * np.trapz(q * arange**2*phi, arange) * icnorm)
+
+        # copy to attribute
+        self.data_k["wlen"] = self.data_q["wlen"]
+        self.data_k["freq"] = self.data_q["freq"]
+        self.data_k["kappa"] = kappa
+
     # ************************
     # load qabs data for comparison
     def load_qref(self, fname):
@@ -142,7 +183,7 @@ class Qabs_utils:
     # ************************
     # compute qabs and qsca
     # data is the data structure loaded by load_eps
-    def compute_q(self, asize, nang=1000):
+    def compute_q(self, asize, nang=100):
         from bhmie import bhmie
 
         # local copy of data to work with
@@ -192,17 +233,20 @@ class Qabs_utils:
             ptype = eval("plt." + ptype)
 
         plt.clf()
+        # check where to take data from
         for ii, wh in enumerate(what):
             if wh in self.data.keys():
-                data_q = self.data
+                data_plot = self.data
             elif wh in self.data_q.keys():
-                data_q = self.data_q
+                data_plot = self.data_q
             elif wh in self.data_ref.keys():
-                data_q = self.data_ref
+                data_plot = self.data_ref
+            elif wh in self.data_k.keys():
+                data_plot = self.data_k
             else:
                 sys.exit("ERROR: unknonw lab " + wh + " to plot")
 
-            ptype(data_q[xref], data_q[wh], label=wh, linestyle=styles[ii])
+            ptype(data_plot[xref], data_plot[wh], label=wh, linestyle=styles[ii])
 
         if xref == "wlen":
             xlabel = "$\\lambda / \\mu$m"
