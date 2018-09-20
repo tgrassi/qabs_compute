@@ -77,7 +77,7 @@ class Qabs_utils:
             print "NOTE: real_eps computed from real_eps1"
             data["real_eps"] = data["real_eps1"] + 1e0
 
-        # compute im_m
+        # compute refractive index from eps
         e1 = data["real_eps"]
         e2 = data["im_eps"]
         data["im_m_computed"] = ((-e1 + np.sqrt(e1**2 + e2**2)) / 2.)**0.5
@@ -104,17 +104,20 @@ class Qabs_utils:
 
         print "Loading from " + fname + " done!"
 
+        # copy data to class attribute
         self.data = data
 
     # ************************
     # perform a benchmark
     def benchmark(self):
+        # Qabs benchmark
         self.load_eps("eps_Sil.dat", labs=["wlen", "real_eps1", "im_eps", "real_m1", "im_m"])
         self.load_qref("Sil_21_1e3.dat")
         self.compute_q(1e-7)
         self.plot(what=["qabs", "qabs_ref", "qsca", "qsca_ref"], fname="benchmark_q.png",
                   styles=["-", ":", "-", ":"])
 
+        # computed refractive index
         self.plot(what=["real_m", "im_m", "real_m_computed", "im_m_computed"],
                   fname="benchmark_m.png", styles=["-", "-", ":", ":"])
 
