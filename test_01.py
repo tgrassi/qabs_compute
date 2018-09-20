@@ -1,21 +1,21 @@
-from utils import get_q, load_eps
-import matplotlib.pyplot as plt
+from utils import Qabs_utils
 
-# load refractive index data from file
-data_eps = load_eps("eps_Sil.dat")
+# create object
+q = Qabs_utils()
 
-# compute qabs, qsca, qback for a grain of size asize.
-# note, asize in cm
+# load data from file with given format
+q.load_eps("eps_Sil.dat")
+
+# compute qabs and qsca for give grain size
 asize = 1e-7  # cm
-data_q = get_q(data_eps, asize)
+q.compute_q(asize)
 
-# plot results, data_q is a dictionary of wavelenght-dependent numpy arrays.
-# note that wavelength is in micron
-plt.loglog(data_q["wlen"], data_q["qabs"], label="$Q_{abs}$")
-plt.loglog(data_q["wlen"], data_q["qsca"], label="$Q_{sca}$")
+# plot eps
+q.plot(what=["real_eps", "im_eps"], fname="test_01_eps.png")
 
-# add some ornaments to plot
-plt.xlabel("$\\lambda / \\mu$m")
-plt.ylabel("$Q_{sca}$ or $Q_{abs}$")
-plt.legend(loc="best")
-plt.savefig("test_01.png")
+# plot refractive index
+q.plot(what=["real_m", "im_m"], fname="test_01_m.png")
+
+# plot qabs and qsca
+q.plot(what=["qabs", "qsca"], fname="test_01_q.png")
+
