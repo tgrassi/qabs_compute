@@ -11,15 +11,17 @@ asize = 1e-7  # cm
 q.compute_q(asize)
 
 # plot eps
-q.plot(what=["real_eps", "im_eps"], fname="test_03_eps.png")
+q.plot(xref="freq", what=["real_eps1"], fname="test_03_reps.png", ptype="plot")
+q.plot(xref="freq", what=["im_eps"], fname="test_03_ieps.png", ptype="plot")
 
 
 # plot refractive index
-q.plot(what=["real_m", "im_m"], fname="test_03_m.png")
+q.plot(xref="freq", what=["real_m"], fname="test_03_rm.png", ptype="plot")
+q.plot(xref="freq", what=["im_m"], fname="test_03_im.png", ptype="plot")
 
 
 # plot qabs and qsca
-q.plot(what=["qabs", "qsca"], fname="test_03_q.png")
+q.plot(xref="freq", what=["qabs", "qsca"], fname="test_03_q.png", ptype="plot")
 
 
 
