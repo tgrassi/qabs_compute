@@ -1,39 +1,44 @@
-from utils import Qabs_utils
+from utils import QabsManager
 
 # create object
-q = Qabs_utils()
+q = QabsManager()
 
 # load data from file with given format
-q.load_eps("eps_Sil.dat")
+core = q.load_material("eps_Sil.dat", name="core")
+
+core.plot_ref_index("ref_index.png")
 
 # load data for mantle/coating material
-q.load_eps_coating("water_ice.dat", labs=["wlen", "real_m", "im_m"])
+mantle = q.load_material("water_ice.dat", labs=["wlen", "real_m", "im_m"], name="mantle")
 
-# write a report with the information on the loaded data
+core.compute_kappa()
+core.save_kappa("test.dat")
+
+
+asdjlksd
+
+# write a report with some information on the loaded data
 q.report()
 
-# compute qabs and qsca for give grain size
-asize = 1e-6  # cm
-q.compute_q(asize)
+# create new composite material
+icy = q.make_optical([core, mantle])
 
-# compute qabs and qsca with coating
-asize_coat = asize + 3e-7  # add coating, cm
-q.compute_q_coating(asize, asize_coat)
+core.compute_q(1e-6)
+mantle.compute_q(1e-6)
+icy.compute_q([1e-6, 1.2e-6])
 
-# compute opacity
-q.compute_kappa()
+icy.plot_q()
 
-# compute opacity adding a layer
-q.compute_kappa_coating(alayer=1e-6)
+icy.load_kappa("test.dat")
 
-# plot eps
-q.plot(what=["real_eps", "im_eps"], fname="test_01_eps.png")
+# icy.dust.alayer = 1e-7
+# icy.compute_kappa()
+# icy.save_kappa("test.dat")
 
-# plot refractive index
-q.plot(what=["real_m", "im_m"], fname="test_01_m.png", db_types=["standard", "coating"])
+icy.plot_kappa()
 
-# plot qabs and qsca
-q.plot(what=["qabs", "qsca"], fname="test_01_q.png", db_types=["standard", "coating"])
+dadasdas
 
-# plot opacity
-q.plot(what=["kappa"], fname="test_01_k.png", db_types=["standard", "coating"])
+icy.dust.alayer = 1e-6
+icy.compute_kappa()
+icy.dust.add_plot_kappa("output.png")

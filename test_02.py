@@ -1,8 +1,7 @@
-from utils import Qabs_utils
+from utils import QabsManager
 
 # create object
-q = Qabs_utils()
+q = QabsManager()
 
 # do benchmark
 q.benchmark()
-
