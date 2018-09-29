@@ -2,6 +2,7 @@ from dust import Dust
 
 
 class Optical:
+
     # *****************
     # class constructor with materials
     def __init__(self, materials):
@@ -15,22 +16,32 @@ class Optical:
         self.dust = Dust(self)
 
     # **************************
-    def plot_kappa(self, fname="output.png"):
-        self.dust.plot_kappa(fname)
+    # plot opacity, postfix will be added in the legend
+    def plot_kappa(self, fname, postfix=""):
+        self.dust.plot_kappa(fname, postfix=postfix)
+
+    # **************************
+    # add opacity plot to current plt session, postfix will be added in the legend
+    def add_plot_kappa(self, fname, postfix=""):
+        self.dust.add_plot_kappa(fname, postfix=postfix)
 
     # ******************
+    # save opacity to file
     def save_kappa(self, fname):
         self.dust.save_kappa(fname)
 
     # ******************
+    # load opacity from file
     def load_kappa(self, fname):
         self.dust.load_kappa(fname)
 
     # **************************
+    # compute opacity
     def compute_kappa(self, verbose=1):
         self.dust.compute_kappa(verbose)
 
     # *******************
+    # load optical properties from file
     def load_q(self, fname, labs=None):
 
         # default labels
@@ -49,15 +60,25 @@ class Optical:
                 self.data[ll].append(arow[ii])
 
     # **************************
-    def plot_q(self, fname="output.png", ptype="loglog", linestyle="-"):
+    # plot optical properties to file, postfix is for the legend
+    def plot_q(self, fname, ptype="loglog", linestyle="-", postfix=""):
+        import matplotlib.pyplot as plt
+        plt.clf()
+        self.add_plot_q(fname, ptype=ptype, linestyle=linestyle, postfix=postfix)
+
+    # **************************
+    # add optical properties plot
+    def add_plot_q(self, fname, ptype="loglog", linestyle="-", postfix=""):
         import matplotlib.pyplot as plt
 
         print "Plotting Q* to " + fname + "..."
         if type(ptype) is str:
             ptype = eval("plt." + ptype)
 
-        ptype(self.data["wlen"], self.data["qabs"], label="$Q_{abs}$", linestyle=linestyle)
-        ptype(self.data["wlen"], self.data["qsca"], label="$Q_{sca}$", linestyle=linestyle)
+        ptype(self.data["wlen"], self.data["qabs"], label="$Q_{abs}$" + postfix,
+              linestyle=linestyle)
+        ptype(self.data["wlen"], self.data["qsca"], label="$Q_{sca}$" + postfix,
+              linestyle=linestyle)
 
         plt.xlabel("$\\lambda$ / $\\mu$m")
         plt.ylabel("$Q_x$")
@@ -65,6 +86,7 @@ class Optical:
         plt.savefig(fname)
 
     # ********************
+    # plot refraction index
     def plot_ref_index(self, fname="output.png", ptype="loglog"):
         import matplotlib.pyplot as plt
 
@@ -141,7 +163,7 @@ class Optical:
 
     # ***********
     # compute qabs, qsca, qback using coating
-    # asize is the radius of the core, asze_coat the
+    # asizes is [core radius, mantle radius]
     # radius of the mantle
     def compute_q_coating(self, materials, asizes):
         from bhcoat import bhcoat_ph
@@ -152,11 +174,11 @@ class Optical:
 
         # check input radii
         if asizes[1] <= asizes[0]:
-            sys.exit("ERROR: the radius of the mantle cannot be smaller than the core!")
+            sys.exit("ERROR: the radius of the mantle cannot be smaller or equal the core!")
 
         # local copy of data to work with
         data = materials[0].data
-        data_coat = materials[0].data
+        data_coat = materials[1].data
 
         # get interpolating function with optical properties
         # of the mantle material
