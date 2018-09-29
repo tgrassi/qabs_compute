@@ -41,6 +41,13 @@ class QabsManager:
     # *****************
     # create new optical material from others
     def make_optical(self, opticals, name=None):
+        import sys
+
+        # check input
+        if len(opticals) != 2:
+            sys.exit("ERROR: you need 2 materials to create a composite one!")
+
+        # generate a random name
         if name is None:
             name = "optical_" + str(len(self.opticals))
 
@@ -76,8 +83,8 @@ class QabsManager:
     def benchmark(self, fname="benchmark_q.png"):
 
         # load material
-        opt = self.load_material("eps_Sil.dat", labs=["wlen", "real_eps1", "im_eps",
-                                                      "real_m1", "im_m"])
+        opt = self.load_material("data/eps_Sil.dat", labs=["wlen", "real_eps1", "im_eps",
+                                                           "real_m1", "im_m"])
 
         # compute Qabs for given size, cm
         opt.compute_q(1e-7)
@@ -85,6 +92,12 @@ class QabsManager:
         opt.plot_q(fname)
 
         # load Qabs from file to compare
-        opt.load_q("Sil_21_1e3.dat")
-        # plot loaded
-        opt.plot_q(fname, linestyle="--")
+        opt.load_q("data/Sil_21_1e3.dat")
+        # over-plot loaded
+        opt.add_plot_q(fname, linestyle="--")
+
+    # *******************
+    @staticmethod
+    def clear_plots():
+        import matplotlib.pyplot as plt
+        plt.clf()
