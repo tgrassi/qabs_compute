@@ -1,33 +1,39 @@
-from utils import Qabs_utils
+from utils import QabsManager
+import numpy as np
 
 # create object
-q = Qabs_utils()
+q = QabsManager()
 
 # load data from file with given format
-q.load_eps("eps_CO.dat", labs=["wlen", "real_eps", "im_eps"])
+mantle = q.load_material("eps_CO.dat", labs=["wlen", "real_eps", "im_eps"])
 
-# compute qabs and qsca for give grain size
-asize = 1e-7  # cm
-q.compute_q(asize)
-q.compute_kappa()
+# load core optical properties
+core = q.load_material("data/eps_Sil.dat")
 
-# set plot default, in this case linear-linear
-q.ptype_default = "linlin"
+# create new material
+composite = q.make_optical([core, mantle])
 
-# plot eps
-q.plot(xref="energy_eV", what=["real_eps"], fname="test_03_reps.png")
-q.plot(xref="freq", what=["im_eps"], fname="test_03_ieps.png")
 
-# plot refractive index
-q.plot(xref="freq", what=["real_m"], fname="test_03_rm.png")
-q.plot(xref="freq", what=["im_m"], fname="test_03_im.png")
+# QABS
+# compute qabs and qsca for a given grain size and variable mantle radii
+asize_core = 1e-7  # cm
+# loop on mantle radius (note: radius not shell thickness)
+for asize_mantle in np.linspace(1.1e-7, 3.1e-7, 5):
+    print "mantle radius, cm:", asize_mantle
+    composite.compute_q([asize_core, asize_mantle])
+    # plot
+    composite.add_plot_q("composite_q.png", postfix=(" (%.1e cm)" % asize_mantle))
 
-# plot qabs and qsca
-q.plot(xref="freq", what=["qabs", "qsca"], fname="test_03_q.png")
 
-# plot qabs and qsca
-q.plot(xref="freq", what=["kappa"], fname="test_03_kappa.png")
-
+# OPACITY
+q.clear_plots()
+# compute kappa for different shell thicknesses
+for alayer in np.logspace(-7., -5., 3):
+    print "tickness, cm:", alayer
+    composite.dust.alayer = alayer
+    composite.compute_kappa()
+    # plot
+    composite.add_plot_kappa("composite_kappa.png", postfix=(" (%.1e cm)" % alayer))
 
 
 
