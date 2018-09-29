@@ -12,6 +12,7 @@ class Material:
             self.load(fname, labs)
 
     # ***********************
+    # add a single point value
     def add_value(self, wlen, ref_index):
         import numpy as np
 
