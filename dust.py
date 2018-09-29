@@ -15,20 +15,34 @@ class Dust:
         self.data = dict()
 
     # ******************
-    def plot_kappa(self, fname):
+    def report(self):
+        print "**************"
+        print "Dust report"
+        print "Material(s):", [x.name for x in self.optical.materials]
+        print "min size, cm: %e" % self.amin
+        print "max size, cm: %e" % self.amax
+        print "MNR expoent: %f" % self.pexp
+        print "bulk density, g/cm3: %e" % self.rho_bulk
+        print "bins:", self.ngrid
+        print "coating layer (if any), cm: %e" % self.alayer
+        print "**************"
+
+    # ******************
+    def plot_kappa(self, fname, postfix=""):
         import matplotlib.pyplot as plt
         plt.clf()
-        self.add_plot_kappa(fname)
+        self.add_plot_kappa(fname, postfix=postfix)
 
     # *******************
-    def add_plot_kappa(self, fname):
+    def add_plot_kappa(self, fname, postfix=""):
         import matplotlib.pyplot as plt
 
         print "Plotting kappa to " + fname + "..."
 
-        plt.loglog(self.data["wlen"], self.data["kappa"])
+        plt.loglog(self.data["wlen"], self.data["kappa"], label="$\\kappa$" + postfix)
         plt.xlabel("$\\lambda$ / $\\mu$m")
         plt.ylabel("$\\kappa$ / [cm$^2$ g$^{-1}$]")
+        plt.legend(loc="best")
         plt.savefig(fname)
 
     # ******************
@@ -56,9 +70,11 @@ class Dust:
         print "done"
 
     # *********************
+    # compute opacity for the current dust
     def compute_kappa(self, verbose=1):
         import sys
 
+        # check number of materials
         if len(self.optical.materials) == 1:
             self.compute_kappa_bare(verbose)
         elif len(self.optical.materials) == 2:
@@ -168,51 +184,3 @@ class Dust:
         self.data["wlen"] = self.optical.data["wlen"]
         self.data["freq"] = self.optical.data["freq"]
         self.data["kappa"] = kappa
-
-    # ****************
-    def reverse_kappa(self):
-        import sys
-        import numpy as np
-        from material import Material
-        from optical import Optical
-        nstep = 10
-        ref_max = np.log10(2e0)
-        ref_min = np.log10(1e-2)
-        fout = open("surf.dat", "w")
-        for ii, wlen in enumerate(self.data["wlen"][::100]):
-            if wlen < 0.1:
-                continue
-            print ii
-            kappa = self.data["kappa"][ii]
-            for real_m in np.logspace(ref_min, ref_max, nstep):
-                xmin = 1e1**ref_min
-                xmax = 1e1**ref_max
-
-                def get_kappa(rm, im_m):
-                    mat = Material()
-                    mat.add_value(wlen, complex(rm, im_m))
-                    opt = Optical(mat)
-                    opt.compute_kappa(verbose=0)
-                    return opt.dust.data["kappa"][0]
-
-                fmin = kappa - get_kappa(real_m, xmin)
-                fmax = kappa - get_kappa(real_m, xmax)
-                if fmin*fmax > 0e0:
-                    print fmin, fmax, xmin, xmax
-                    print("ERROR: same signs in bisection")
-                    continue
-
-                xmed = None
-                while abs(xmax - xmin) > 1e-6:
-                    xmed = (xmin + xmax) / 2e0
-                    fmed = kappa - get_kappa(real_m, xmed)
-                    if fmed*fmax < 0e0:
-                        xmin = xmed
-                        fmin = fmed
-                    else:
-                        xmax = xmed
-                        fmax = fmed
-
-                fout.write(str(wlen) + " " + str(real_m) + " " + str(xmed) + "\n")
-                fout.flush()
-            fout.write("\n")
