@@ -16,4 +16,17 @@ def micron_to_hz(xdata):
 
 # *******************
 def hz_to_ev(xdata):
-    return constant("hplanck_eV*s") * xdata
+    import numpy as np
+    return constant("hplanck_eV*s") * np.array(xdata)
+
+
+# *******************
+def ev_to_micron(xdata):
+    import numpy as np
+    return constant("hplanck_eV*s") * constant("clight") / np.array(xdata) * 1e4
+
+
+# **********************
+def wavenumber_to_micron(xdata):
+    import numpy as np
+    return 1e4 / np.array(xdata)
