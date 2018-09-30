@@ -87,8 +87,17 @@ class Optical:
 
     # ********************
     # plot refraction index
-    def plot_ref_index(self, fname="output.png", ptype="loglog"):
+    def plot_ref_index(self, fname, ptype="loglog"):
         import matplotlib.pyplot as plt
+        plt.clf()
+        self.add_plot_ref_index(fname, ptype=ptype)
+
+    # ********************
+    # plot refraction index
+    def add_plot_ref_index(self, fname, ptype="loglog"):
+        import matplotlib.pyplot as plt
+
+        print "Plotting refractive index to " + fname
 
         if type(ptype) is str:
             ptype = eval("plt." + ptype)
