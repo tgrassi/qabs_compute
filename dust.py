@@ -5,7 +5,7 @@ class Dust:
     # ********************
     # dust class computes kappa and plot
     def __init__(self, optical=None, amin=5e-7, amax=2.5e-5, pexp=-3.5, rho_bulk=2.9,
-                 ngrid=30, alayer=None):
+                 ngrid=30, alayer=None, aratio=None):
         self.optical = optical  # dust material
         self.amin = amin  # min grain size, cm
         self.amax = amax  # max grain size, cm
@@ -13,6 +13,7 @@ class Dust:
         self.rho_bulk = rho_bulk  # bulk density, g/cm3
         self.ngrid = ngrid  # number of grid points for grain size (log-spaced)
         self.alayer = alayer  # mantle layer thickness (if any)
+        self.aratio = aratio  # mantle thickness / core radius ratio
         self.data = dict()  # computed data
 
     # ******************
@@ -27,6 +28,7 @@ class Dust:
         print "bulk density, g/cm3: %e" % self.rho_bulk
         print "bins:", self.ngrid
         print "coating layer (if any), cm: %e" % self.alayer
+        print "mantle / core ratio (if any): %e" % self.aratio
         print "**************"
 
     # ******************
@@ -46,6 +48,8 @@ class Dust:
         plt.loglog(self.data["wlen"], self.data["kappa"], label="$\\kappa$" + postfix)
         plt.xlabel("$\\lambda$ / $\\mu$m")
         plt.ylabel("$\\kappa$ / [cm$^2$ g$^{-1}$]")
+        # plt.xlim(1e0, 2e3)
+        # plt.ylim(1e-1, 1e5)
         plt.legend(loc="best")
         plt.savefig(fname)
 
@@ -155,15 +159,27 @@ class Dust:
         if verbose > 0:
             print "Computing opacity with coating..."
 
-        if self.alayer is None:
-            sys.exit("ERROR: for composite materials you should set dust.alayer")
+        if self.alayer is None and self.aratio is None:
+            sys.exit("ERROR: for composite materials you should set dust.alayer or dust.aratio")
+        if self.alayer is not None and self.aratio is not None:
+            sys.exit("ERROR: for composite materials you cannot set dust.alayer and dust.aratio"
+                     + " together!")
 
         qdata = []
+        arange_full = []
         # loop on grain sizes
         for ii, asize in enumerate(arange):
             if verbose > 0:
                 print round(ii * 1e2 / (self.ngrid - 1), 1), "%"
-            asize_coat = asize + self.alayer
+            if self.alayer is not None:
+                asize_coat = asize + self.alayer
+            elif self.aratio is not None:
+                asize_coat = (self.aratio + 1e0) * asize
+            else:
+                sys.exit("ERROR: something went wrong!")
+
+            arange_full.append(asize_coat)
+
             self.optical.compute_q([asize, asize_coat])
             qabs = self.optical.data["qabs"]
             qdata.append(qabs)
@@ -171,8 +187,7 @@ class Dust:
         qdata = np.array(qdata).T
 
         # size range of grain core+mantle, cm
-        arange_full = np.logspace(np.log10(self.amin + self.alayer),
-                                  np.log10(self.amax + self.alayer), self.ngrid)
+        arange_full = np.array(arange_full)
 
         # size distribution including mantle
         phi = arange_full**self.pexp
