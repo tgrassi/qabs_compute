@@ -10,7 +10,7 @@ class QabsManager:
         self.opticals = dict()
 
     # ********************
-    def load_material(self, fname, labs=None, name=None, force=False):
+    def load_material(self, fname, labs=None, name=None, force=False, units="micron"):
         import sys
 
         # default labs input
@@ -29,7 +29,7 @@ class QabsManager:
             print "Change name or use force=True"
             sys.exit()
 
-        mat = Material(fname, labs, name)
+        mat = Material(fname, labs, name, units)
         opt = Optical(mat)
 
         # add materials to dictionary
