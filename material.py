@@ -3,13 +3,13 @@
 class Material:
 
     # ******************
-    def __init__(self, fname=None, labs=None, name=None):
+    def __init__(self, fname=None, labs=None, name=None, units="micron"):
 
         self.data = dict()
 
         if fname is not None:
             self.name = name
-            self.load(fname, labs)
+            self.load(fname, labs, units)
 
     # ***********************
     # add a single point value
@@ -37,16 +37,25 @@ class Material:
     # im_m: imaginary part of refractive index
     # Note: you only need wlen, real_m (or real_m1), and im_m
     # Returns a dictionary of numpy arrays with keys as labs
-    def load(self, fname, labs):
+    def load(self, fname, labs, units):
         import sys
         import numpy as np
-        from utility import hz_to_ev, micron_to_hz
+        from utility import hz_to_ev, micron_to_hz, ev_to_micron, wavenumber_to_micron
 
         print "Loading from " + fname + "..."
 
         # wavelength is mandatory
         if "wlen" not in labs:
             sys.exit("ERROR: wlen label is needed when loading data!")
+
+        allowed_labs = ["wlen", "real_m", "im_m", "real_m1", "real_eps",
+                        "im_eps", "real_eps1"]
+
+        for lab in labs:
+            if lab not in allowed_labs:
+                print "ERROR: found unknown label " + lab
+                print " allowed labels are", allowed_labs
+                sys.exit()
 
         # init data dictionary
         data = {lab: [] for lab in labs}
@@ -61,6 +70,18 @@ class Material:
                          " has more columns than the list provided in labs argument!")
             for ii, lab in enumerate(labs):
                 data[lab].append(arow[ii])
+
+        # convert to units if necessary
+        if units.lower() == "micron":
+            print "Found units " + units
+        elif units.lower() == "ev":
+            print "Found units " + units + ", converting to micron"
+            data["wlen"] = ev_to_micron(data["wlen"])
+        elif units.lower() == "1/cm":
+            print "Found units " + units + ", converting to micron"
+            data["wlen"] = wavenumber_to_micron(data["wlen"])
+        else:
+            sys.exit("ERROR: unknown units " + units)
 
         # reverse data if needed
         if data["wlen"][0] > data["wlen"][1]:
@@ -79,12 +100,12 @@ class Material:
         data["energy_eV"] = hz_to_ev(data["freq"])
 
         # find real_m from real_m1 if needed
-        if "real_m1" in data:
+        if "real_m1" in data and "real_m" not in data:
             print "NOTE: real_m computed from real_m1"
             data["real_m"] = data["real_m1"] + 1e0
 
-        # find real_m from real_eps1 if needed
-        if "real_eps1" in data:
+        # find real_eps from real_eps1 if needed
+        if "real_eps1" in data and "real_eps" not in data:
             print "NOTE: real_eps computed from real_eps1"
             data["real_eps"] = data["real_eps1"] + 1e0
 
