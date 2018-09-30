@@ -1,5 +1,7 @@
-# Hudgins+1993 ice mixture 10K
-#w(1/cm)    Re(m)
+# Hudgins+1993 H2O:CH3OH:CO:NH3=100:10:1:1 ice mixture 10K
+# http://esoads.eso.org/abs/1993ApJS...86..713H
+# Fig.2, Tab.2A-2F
+# w(1/cm)    Re(m)
 67.39549661543197 1.7477805952314553
 100.45863628069992 1.7950166765539517
 135.6898506781149 1.8085987100588643

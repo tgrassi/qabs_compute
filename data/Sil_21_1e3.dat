@@ -1,10 +1,10 @@
 #Wed Jun  2 11:05:12 EDT 1993
-#Astronomical silicate                   
+#Astronomical silicate
 #Computed by B.T.Draine (cf Laor, A., & Draine, B.T. 1993, ApJ 402,441)
 #  21 1.000E-03 1.000E+01 = NRAD, a_1 (micron), a_NRAD (micron)
 # 241 1.000E+03 1.000E-03 = NWAV, w_1 (micron), w_NWAV (micron)
 #
-#1.000E-03 = radius(micron) Astronomical silicate                   
+#1.000E-03 = radius(micron) Astronomical silicate
 #w(micron)  Q_abs     Q_sca     g=<cos>
 1.000E+03 1.371E-07 2.530E-21  0.00E+00
 9.441E+02 1.538E-07 3.185E-21  0.00E+00

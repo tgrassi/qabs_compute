@@ -1,8 +1,8 @@
-#Wed Jun  2 12:11:56 EDT 1993
-#Astronomical silicate                   
-#B.T.Draine, Princeton Univ. (cf Laor, A., & Draine, B.T. 1993, ApJ 402,441)
+# Astronomical silicate
+# B.T.Draine, Princeton Univ. (cf Laor, A., & Draine, B.T. 1993, ApJ 402,441)
 # 1.000E-01 = radius (micron)
-#1201 1.000E+03 1.000E-03 = NWAV, w_1 (micron), w_NWAV (micron)
+# 1201 1.000E+03 1.000E-03 = NWAV, w_1 (micron), w_NWAV (micron)
+# https://www.astro.princeton.edu/~draine/dust/dust.diel.html
 #w(micron)  Re(eps-1)  Im(eps)    Re(m-1)    Im(m)
 1.000E+03  1.064E+01 3.384E-01  2.412E+00 4.958E-02
 9.886E+02  1.064E+01 3.423E-01  2.412E+00 5.016E-02
