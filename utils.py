@@ -39,6 +39,98 @@ class QabsManager:
         return opt
 
     # *****************
+    # merge fname1 and fname 2 to fname_out, labs1 and labs2 are
+    # the column labels (that must contain wlen assumed to be the
+    # independent variable)
+    @staticmethod
+    def merge_data(fname1, fname2, labs1, labs2, fname_out):
+        import numpy as np
+        import sys
+
+        # check to avid overwriting
+        if fname1 == fname_out or fname2 == fname_out:
+            sys.exit("ERROR: input and output file in file merger are suspiciously the same!")
+
+        # check if independent variables in in both sets
+        if "wlen" not in labs1 and "wlen" not in labs2:
+            sys.exit("ERROR: when merging you must have wlen label!")
+
+        # load data from file
+        def load_data(fname, labs):
+            data = {ll: [] for ll in labs}
+            for row in open(fname):
+                srow = row.strip()
+                srow = srow.replace("\t", " ").replace(",", " ")
+                if srow == "" or srow.startswith("#"):
+                    continue
+                arow = [float(x) for x in srow.split(" ") if x != ""]
+                for ii, ll in enumerate(labs):
+                    data[ll].append(arow[ii])
+            return {k: np.array(v) for k, v in data.iteritems()}
+
+        # create interpolator from data
+        def create_interpolator(data):
+            from scipy.interpolate import interp1d
+            return {k: interp1d(data["wlen"], v) for k, v in data.iteritems() if k != "wlen"}
+
+        # load data
+        data1 = load_data(fname1, labs1)
+        data2 = load_data(fname2, labs2)
+
+        # create interpoltors
+        interp1 = create_interpolator(data1)
+        interp2 = create_interpolator(data2)
+
+        data_merged = []
+        wlen_merged = []
+        count_total_points = count_interpolated_points = 0
+        # interpolate data on the merged independent variables
+        for wlen in np.append(data1["wlen"], data2["wlen"]):
+            vrow = []
+            interp_ok = True
+
+            count_total_points += 1
+
+            # intepolate data1 if wlen in range
+            for lab in labs1:
+                if lab != "wlen":
+                    try:
+                        vrow.append(interp1[lab](wlen))
+                    except ValueError:
+                        interp_ok = False
+
+            # intepolate data2 if wlen in range
+            for lab in labs2:
+                if lab != "wlen":
+                    try:
+                        vrow.append(interp2[lab](wlen))
+                    except ValueError:
+                        interp_ok = False
+
+            # skip non-interpolable data
+            if not interp_ok:
+                continue
+
+            count_interpolated_points += 1
+
+            # store data to sort and write after
+            wlen_merged.append(wlen)
+            data_merged.append(vrow)
+
+        # write sorted data to file
+        fout = open(fname_out, "w")
+        labs_merged = [x for x in labs1 + labs2 if x != "wlen"]
+        fout.write("# wlen " + " ".join(labs_merged) + "\n")
+        for jj in np.argsort(wlen_merged):
+            vrow = [wlen_merged[jj]] + data_merged[jj]
+            fout.write(" ".join([str(x) for x in vrow]) + "\n")
+        fout.close()
+
+        print fname1 + " merged to " + fname2 + " in " + fname_out
+        print "total points %d, interpolated points %d" % (count_total_points,
+                                                           count_interpolated_points)
+
+    # *****************
     # create new optical material from others
     def make_optical(self, opticals, name=None):
         import sys
