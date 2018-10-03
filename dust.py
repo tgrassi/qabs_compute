@@ -5,7 +5,7 @@ class Dust:
     # ********************
     # dust class computes kappa and plot
     def __init__(self, optical=None, amin=5e-7, amax=2.5e-5, pexp=-3.5, rho_bulk=2.9,
-                 ngrid=30, alayer=None, aratio=None):
+                 ngrid=100, alayer=None, aratio=None):
         self.optical = optical  # dust material
         self.amin = amin  # min grain size, cm
         self.amax = amax  # max grain size, cm
@@ -14,6 +14,7 @@ class Dust:
         self.ngrid = ngrid  # number of grid points for grain size (log-spaced)
         self.alayer = alayer  # mantle layer thickness (if any)
         self.aratio = aratio  # mantle thickness / core radius ratio
+        self.mass_normalization = None
         self.data = dict()  # computed data
 
     # ******************
@@ -33,23 +34,24 @@ class Dust:
 
     # ******************
     # plot opacity to file
-    def plot_kappa(self, fname, postfix=""):
+    def plot_kappa(self, fname, postfix="", linestyle="-"):
         import matplotlib.pyplot as plt
         plt.clf()
-        self.add_plot_kappa(fname, postfix=postfix)
+        self.add_plot_kappa(fname, postfix=postfix, linestyle=linestyle)
 
     # *******************
     # add a plot to the current opacity plot
-    def add_plot_kappa(self, fname, postfix=""):
+    def add_plot_kappa(self, fname, postfix="", linestyle="-"):
         import matplotlib.pyplot as plt
 
         print "Plotting kappa to " + fname + "..."
 
-        plt.loglog(self.data["wlen"], self.data["kappa"], label="$\\kappa$" + postfix)
+        plt.loglog(self.data["wlen"], self.data["kappa"], label="$\\kappa$" + postfix,
+                   linestyle=linestyle)
         plt.xlabel("$\\lambda$ / $\\mu$m")
         plt.ylabel("$\\kappa$ / [cm$^2$ g$^{-1}$]")
-        # plt.xlim(1e0, 2e3)
-        # plt.ylim(1e-1, 1e5)
+        plt.xlim(xmax=1e2)
+        plt.ylim(ymin=1e2)
         plt.legend(loc="best")
         plt.savefig(fname)
 
@@ -122,18 +124,19 @@ class Dust:
         qdata = np.array(qdata).T
 
         # size distribution
-        phi = arange ** self.pexp
+        phi = arange**self.pexp
 
         # normalizing mass
-        cnorm = 4. / 3. * np.pi * self.rho_bulk * (self.amax ** pexp4
-                                                   - self.amin ** pexp4) / pexp4
+        cnorm = 4. / 3. * np.pi * self.rho_bulk * (self.amax**pexp4
+                                                   - self.amin**pexp4) / pexp4
+        self.mass_normalization = cnorm
         # store inverse
-        icnorm = 1e0 / cnorm
+        icnorm = 1e0 #/ cnorm
 
         kappa = []
         # loop on asize to compute integral
         for q in qdata:
-            kappa.append(np.pi * np.trapz(q * arange ** 2 * phi, arange) * icnorm)
+            kappa.append(np.pi * np.trapz(q * arange**2 * phi, arange) * icnorm)
 
         # copy to attribute
         self.data["wlen"] = self.optical.data["wlen"]
@@ -183,6 +186,7 @@ class Dust:
             self.optical.compute_q([asize, asize_coat])
             qabs = self.optical.data["qabs"]
             qdata.append(qabs)
+
         # transpose from (asize, wlen) to (wlen, asize)
         qdata = np.array(qdata).T
 
@@ -190,17 +194,17 @@ class Dust:
         arange_full = np.array(arange_full)
 
         # size distribution including mantle
-        phi = arange_full**self.pexp
+        phi = arange**self.pexp
 
         # normalizing mass (without mantle, since mantle is supposed to be added to
         # the original dust distribution)
         cnorm = 4. / 3. * np.pi * self.rho_bulk * (self.amax**pexp4 - self.amin**pexp4) / pexp4
-        icnorm = 1e0 / cnorm
+        icnorm = 1e0 #/ cnorm
 
         kappa = []
         # loop on wlen to compute integral on the size distribution
         for q in qdata:
-            kappa.append(np.pi * np.trapz(q * arange_full**2 * phi, arange_full) * icnorm)
+            kappa.append(np.pi * np.trapz(q * arange_full**2 * phi, arange) * icnorm)
 
         # copy data to attribute variable
         self.data["wlen"] = self.optical.data["wlen"]
