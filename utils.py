@@ -153,6 +153,61 @@ class QabsManager:
         self.opticals[name] = opt
         return opt
 
+    # *****************
+    @staticmethod
+    def merge_kappa(opticals, fractions, mass_normalization=1e0):
+        import sys
+        import numpy as np
+        from scipy.interpolate import interp1d
+
+        # check if fractions and opticals are the same
+        if len(fractions) != len(opticals):
+            sys.exit("ERROR: when combining kappa, opticals and fractions should be the "
+                     "same number!")
+
+        # merge all the wlen
+        wlen_all = np.concatenate([x.dust.data["wlen"] for x in opticals])
+
+        # create interpolators
+        interps = [interp1d(x.dust.data["wlen"], x.dust.data["kappa"]) for x in opticals]
+
+        kappa_interp = []
+        wlen_interp = []
+        # loop to interpolate
+        for wlen in wlen_all:
+            interp_ok = True
+            # loop on interpolators
+            interpolated_kappa = 0e0
+            for ii, interp in enumerate(interps):
+                # try to interpolate otherwise skip
+                try:
+                    # interpolate at given wavelength
+                    interpolated_kappa += interp(wlen) * fractions[ii]
+                except ValueError:
+                    interp_ok = False
+
+            # store data
+            if interp_ok:
+                kappa_interp.append(interpolated_kappa)
+                wlen_interp.append(wlen)
+
+        # convert to np arrays
+        wlen_interp = np.array(wlen_interp)
+        kappa_interp = np.array(kappa_interp)
+
+        # sort by wavelength
+        idxs = np.argsort(wlen_interp)
+        kappa_interp = kappa_interp[idxs]
+        wlen_interp = wlen_interp[idxs]
+
+        # create a new optical object and store kappa in its dust object
+        # Note: this optical has no material
+        combined = Optical(None)
+        combined.dust.data["wlen"] = wlen_interp
+        combined.dust.data["kappa"] = kappa_interp / mass_normalization
+
+        return combined
+
     # ******************
     # write a database report
     def report(self):
