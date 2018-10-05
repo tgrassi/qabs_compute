@@ -204,7 +204,7 @@ class QabsManager:
         # Note: this optical has no material
         combined = Optical(None)
         combined.dust.data["wlen"] = wlen_interp
-        combined.dust.data["kappa"] = kappa_interp / mass_normalization
+        combined.dust.data["kappa"] = kappa_interp # / mass_normalization
 
         return combined
 
