@@ -50,8 +50,8 @@ class Dust:
                    linestyle=linestyle)
         plt.xlabel("$\\lambda$ / $\\mu$m")
         plt.ylabel("$\\kappa$ / [cm$^2$ g$^{-1}$]")
-        plt.xlim(xmax=1e2)
-        plt.ylim(ymin=1e2)
+        #plt.xlim(xmax=1e2)
+        #plt.ylim(ymin=1e2)
         plt.legend(loc="best")
         plt.savefig(fname)
 
@@ -131,7 +131,7 @@ class Dust:
                                                    - self.amin**pexp4) / pexp4
         self.mass_normalization = cnorm
         # store inverse
-        icnorm = 1e0 #/ cnorm
+        icnorm = 1e0 / cnorm
 
         kappa = []
         # loop on asize to compute integral
@@ -199,7 +199,7 @@ class Dust:
         # normalizing mass (without mantle, since mantle is supposed to be added to
         # the original dust distribution)
         cnorm = 4. / 3. * np.pi * self.rho_bulk * (self.amax**pexp4 - self.amin**pexp4) / pexp4
-        icnorm = 1e0 #/ cnorm
+        icnorm = 1e0 / cnorm
 
         kappa = []
         # loop on wlen to compute integral on the size distribution
