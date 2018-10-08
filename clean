@@ -1,0 +1,24 @@
+#!/usr/bin/python
+# !python
+
+import os
+import sys
+
+# get verbosity
+verbose = ("-v" in sys.argv)
+
+rmCount = 0
+# remove temp files (~) from subfolders
+for root, dirnames, filenames in os.walk('.'):
+    for fle in filenames:
+        for end in ["~", ".pyc"]:
+            if fle.endswith(end):
+                fname = root + "/" + fle
+                os.unlink(fname)
+                if verbose:
+                    print "removing ./"+fname
+                rmCount += 1
+
+
+print str(rmCount) + " elements cleaned"
+print "done!"
