@@ -1,8 +1,20 @@
 from utils import QabsManager
+from optical import Optical
 import numpy as np
 
 # create object
 q = QabsManager()
+
+opt = Optical(None)
+
+opt.load_kappa("data/kappa_oss94_v00.dat")
+opt.add_plot_kappa("kappa.png", postfix=" (ref, ratio 0.0)", linestyle=":")
+
+opt.load_kappa("data/kappa_oss94_v05.dat")
+opt.add_plot_kappa("kappa.png", postfix=" (ref, ratio 0.5)", linestyle=":")
+
+opt.load_kappa("data/kappa_oss94_v45.dat")
+opt.add_plot_kappa("kappa.png", postfix=" (ref, ratio 4.5)", linestyle=":")
 
 # load core optical properties
 core_silicate = q.load_material("data/eps_Sil_Oss92.dat", ["wlen", "real_m", "im_m"])
