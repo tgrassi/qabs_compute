@@ -45,10 +45,7 @@ core_carbon.compute_kappa()
 frac = np.array((1., 0.475862068965517))
 frac /= sum(frac)
 
-norm = core_carbon.dust.mass_normalization * frac[1] \
-       + core_silicate.dust.mass_normalization * frac[0]
-
-merged = q.merge_kappa([core_silicate, core_carbon], frac, mass_normalization=norm)
+merged = q.merge_kappa([core_silicate, core_carbon], frac)
 merged.add_plot_kappa("kappa.png", postfix=" (merged, ratio 0.0)",
                       linestyle="-")
 
@@ -66,7 +63,7 @@ for vratio in [0.5, 4.5]:
     composite_carbon.dust.rho_bulk = 2e0
     composite_carbon.compute_kappa()
 
-    merged = q.merge_kappa([composite_silicate, composite_carbon], frac, mass_normalization=norm)
+    merged = q.merge_kappa([composite_silicate, composite_carbon], frac)
     merged.add_plot_kappa("kappa.png", postfix=" (merged, ratio %.1f)" % vratio,
                           linestyle="-")
 
