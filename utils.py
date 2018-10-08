@@ -155,7 +155,7 @@ class QabsManager:
 
     # *****************
     @staticmethod
-    def merge_kappa(opticals, fractions, mass_normalization=1e0):
+    def merge_kappa(opticals, fractions):
         import sys
         import numpy as np
         from scipy.interpolate import interp1d
@@ -204,7 +204,7 @@ class QabsManager:
         # Note: this optical has no material
         combined = Optical(None)
         combined.dust.data["wlen"] = wlen_interp
-        combined.dust.data["kappa"] = kappa_interp # / mass_normalization
+        combined.dust.data["kappa"] = kappa_interp  # / mass_normalization
 
         return combined
 
