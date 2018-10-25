@@ -10,6 +10,7 @@ class QabsManager:
         self.opticals = dict()
 
     # ********************
+    # load material and return optical object
     def load_material(self, fname, labs=None, name=None, force=False, units="micron"):
         import sys
 
