@@ -87,14 +87,14 @@ class Optical:
 
     # ********************
     # plot refraction index
-    def plot_ref_index(self, fname, ptype="loglog"):
+    def plot_ref_index(self, fname, ptype="loglog", linestyle="-", marker=None):
         import matplotlib.pyplot as plt
         plt.clf()
-        self.add_plot_ref_index(fname, ptype=ptype)
+        self.add_plot_ref_index(fname, ptype=ptype, linestyle=linestyle, marker=marker)
 
     # ********************
     # plot refraction index
-    def add_plot_ref_index(self, fname, ptype="loglog"):
+    def add_plot_ref_index(self, fname, ptype="loglog", linestyle="-", marker=None):
         import matplotlib.pyplot as plt
 
         print "Plotting refractive index to " + fname
@@ -103,8 +103,10 @@ class Optical:
             ptype = eval("plt." + ptype)
 
         for material in self.materials:
-            ptype(material.data["wlen"], material.data["real_m"], label="Re($m$)")
-            ptype(material.data["wlen"], material.data["im_m"], label="Im($m$)")
+            ptype(material.data["wlen"], material.data["real_m"], label="Re($m$)",
+                  linestyle=linestyle, marker=marker)
+            ptype(material.data["wlen"], material.data["im_m"], label="Im($m$)",
+                  linestyle=linestyle, marker=marker)
 
         plt.xlabel("$\\lambda$ / $\\mu$m")
         plt.ylabel("$m$")
@@ -224,3 +226,9 @@ class Optical:
         # convert to numy arrays
         data_q_coat = {lab: np.array(x) for lab, x in data_q_coat.iteritems()}
         self.data = data_q_coat
+
+    # ****************************
+    def extrapolate(self, wmax):
+
+        for ii, material in enumerate(self.materials):
+            self.materials[ii].extrapolate(wmax)
