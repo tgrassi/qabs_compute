@@ -80,6 +80,9 @@ class Material:
         elif units.lower() == "1/cm":
             print "Found units " + units + ", converting to micron"
             data["wlen"] = wavenumber_to_micron(data["wlen"])
+        elif units.lower() == "cm":
+            print "Found units " + units + ", converting to micron"
+            data["wlen"] = np.array(data["wlen"]) * 1e4
         else:
             sys.exit("ERROR: unknown units " + units)
 
@@ -132,6 +135,11 @@ class Material:
             print "NOTE: real_m1 computed from real_m"
             data["real_m1"] = data["real_m"] - 1e0
 
+        # compute eps if missing from im_m and real_m
+        if "real_eps" not in data:
+            data["real_eps"] = data["real_m"]**2 - data["im_m"]**2
+            data["im_eps"] = 2e0 * data["real_m"] * data["im_m"]
+
         # remove dummy if present
         if "dummy" in data:
             data["dummy"] = None
@@ -143,3 +151,32 @@ class Material:
 
         # copy data to attribute
         self.data = data
+
+    # ***********************
+    def extrapolate(self, wmax, nlast=20):
+        import numpy as np
+        from scipy.optimize import curve_fit
+
+        def func_ew1(x, b1, b2, b3, b4, b5):
+            return 1e0 + (b1*x**4 + b2*x**2) / (b3*x**4 + b4*x**2 + b5)
+
+        def func_ew2(x, b1, b2, b3, b4):
+            return b1*x**3 / (b2*x**4 + b3*x**2 + b4)
+
+        coeff_e1, s2 = curve_fit(func_ew1, self.data["wlen"][-nlast:],
+                                 self.data["real_eps"][-nlast:])
+        coeff_e2, s2 = curve_fit(func_ew2, self.data["wlen"][-nlast:],
+                                 self.data["im_eps"][-nlast:])
+
+        wmax_data = max(self.data["wlen"])
+        for wlen in np.linspace(wmax_data, wmax, 20):
+            e1 = func_ew1(wlen, coeff_e1[0], coeff_e1[1], coeff_e1[2], coeff_e1[3], coeff_e1[4])
+            e2 = func_ew2(wlen, coeff_e2[0], coeff_e2[1], coeff_e2[2], coeff_e2[3])
+            m2 = ((-e1 + np.sqrt(e1 ** 2 + e2 ** 2)) / 2.) ** 0.5
+            m1 = e2 / 2. / m2
+
+            self.data["wlen"] = np.append(self.data["wlen"], wlen)
+            self.data["real_m"] = np.append(self.data["real_m"], m1)
+            self.data["im_m"] = np.append(self.data["im_m"], m2)
+            self.data["real_eps"] = np.append(self.data["real_eps"], e1)
+            self.data["im_eps"] = np.append(self.data["im_eps"], e2)
