@@ -113,6 +113,24 @@ class Optical:
         plt.legend(loc="best")
         plt.savefig(fname)
 
+    # ******************
+    # save refrative index to file(s)
+    # note: multiple material saved to multiple files
+    def save_refractive_index(self, fname):
+        import sys
+
+        # convert finame to list if not a list
+        if type(fname) is not list:
+            fname = [fname]
+
+        # check number of filenames
+        if len(self.materials) != len(fname):
+            sys.exit("ERROR: number of filenames must be same as materials!")
+
+        # loop on materials to save refractive index to file
+        for ii, material in enumerate(self.materials):
+            material.save_refractive_index(fname[ii])
+
     # *********************
     # compute Q* for a single size
     def compute_q(self, asizes):
