@@ -7,17 +7,18 @@ q = QabsManager()
 
 # load and plot core
 core_silicate = q.load_material("data/eps_Sil_Oss92.dat", ["wlen", "real_m", "im_m"])
-core_silicate.plot_ref_index("ref_index_core.png")
+#core_silicate.plot_ref_index("ref_index_core.png")
 
 # load and plot mantle
 mantle = q.load_material("data/eps_H93.dat", ["wlen", "real_m", "im_m"], units="1/cm")
 # mantle = q.load_material("data/eps_dirty_ice_P93.dat", ["wlen", "real_m", "im_m"], units="micron")
 # mantle = q.load_material("data/dirty.dat", ["wlen", "real_m", "im_m"], units="cm")
 
-mantle.add_plot_ref_index("ref_index_mantle.png", ptype="scatter")
+mantle.add_plot_ref_index("ref_index_mantle.png", ptype="plot", marker=".")
 
 mantle.extrapolate(1e3)
-mantle.add_plot_ref_index("ref_index_mantle.png", ptype="plot", marker="o")
+mantle.add_plot_ref_index("ref_index_mantle.png", ptype="plot", linestyle=":")
+mantle.save_refractive_index("ref_index_mantle.dat")
 
 # compute and plot core opacity
 # core.load_kappa("data/kappa_Oss94_naked.dat")
