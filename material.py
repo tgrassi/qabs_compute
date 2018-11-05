@@ -153,25 +153,75 @@ class Material:
         self.data = data
 
     # ***********************
-    def extrapolate(self, wmax, nlast=20):
+    def extrapolate(self, wmax, nlast=30):
         import numpy as np
+        import sys
         from scipy.optimize import curve_fit
+        from lmfit import minimize, Parameters, Parameter
 
-        def func_ew1(x, b1, b2, b3, b4, b5):
-            return 1e0 + (b1*x**4 + b2*x**2) / (b3*x**4 + b4*x**2 + b5)
+        def ff(x, fl, wl2, gamma):
+            clight = 3e10
+            echarge = 4.80320425e-10
+            me = 9.10938e-28
+            pre = 2e0 * echarge**2 / me / clight
+            return fl * wl2 * x**2 / (2e0 * np.pi * clight * (x**2 - wl2)
+                                      + 1j * gamma * wl2 * x)
 
-        def func_ew2(x, b1, b2, b3, b4):
-            return b1*x**3 / (b2*x**4 + b3*x**2 + b4)
+        def residuals(paramz, x, data):
+            fl = paramz['fl'].value
+            wl2 = paramz['wl2'].value
+            gamma = paramz['gamma'].value
 
-        coeff_e1, s2 = curve_fit(func_ew1, self.data["wlen"][-nlast:],
-                                 self.data["real_eps"][-nlast:])
-        coeff_e2, s2 = curve_fit(func_ew2, self.data["wlen"][-nlast:],
-                                 self.data["im_eps"][-nlast:])
+            diff = ff(x, fl, wl2, gamma) - data
+            # The only change required is to use view instead of abs.
+            return diff.view(np.float)
 
-        wmax_data = max(self.data["wlen"])
+        params = Parameters()
+        params.add("fl", value=1e15, min=1e9, max=1e20)
+        params.add("wl2", value=1e-4, min=1e-10, max=1e-1)
+        params.add("gamma", value=1e14, min=1e8, max=1e20)
+
+        th = self.data["wlen"][-nlast:] * 1e-4
+        ydata = (self.data["real_m"][-nlast:] + 1j * self.data["im_m"][-nlast:])**2 - 1e0
+
+        result = minimize(residuals, params, args=(th, ydata), method="leastsq")
+        fl = result.params["fl"].value
+        wl2 = result.params["wl2"].value
+        gamma = result.params["gamma"].value
+
+        print result.params
+
+        zdata = ff(th, fl, wl2, gamma)
+
+        import matplotlib.pyplot as plt
+        plt.clf()
+        plt.plot(th, ydata)
+        plt.plot(th, zdata)
+        plt.show()
+
+        askljdlkas
+
+        def fe1(x2, wp2, wo2, gamma):
+            return 1e0 + wp2 * (wo2 - x2) / ((wo2 - x2)**2 + gamma**2 * x2)
+
+        def fe2(x, wp2, wo2, gamma):
+            return wp2 * gamma * x / ((wo2 - x**2)**2 + gamma**2 * x**2)
+
+        step = 1
+        c1 = c2 = None
+        s1 = s2 = None
+        for _ in range(10):
+            c2, s2 = curve_fit(fe2, 1e0 / self.data["wlen"][-nlast::step],
+                               self.data["im_eps"][-nlast::step], p0=c1)
+            c1, s1 = curve_fit(fe1, 1e0 / self.data["wlen"][-nlast::step]**2,
+                               self.data["real_eps"][-nlast::step], p0=c2)
+        if np.inf in s1 or np.inf in s2:
+            sys.exit("ERROR: infinity in covariance matrix!")
+
+        wmax_data = self.data["wlen"][-1]
         for wlen in np.linspace(wmax_data, wmax, 20):
-            e1 = func_ew1(wlen, coeff_e1[0], coeff_e1[1], coeff_e1[2], coeff_e1[3], coeff_e1[4])
-            e2 = func_ew2(wlen, coeff_e2[0], coeff_e2[1], coeff_e2[2], coeff_e2[3])
+            e1 = fe1(1e0 / wlen**2, c1[0], c1[1], c1[2])
+            e2 = fe2(1e0 / wlen, c1[0], c1[1], c1[2])
             m2 = ((-e1 + np.sqrt(e1 ** 2 + e2 ** 2)) / 2.) ** 0.5
             m1 = e2 / 2. / m2
 
@@ -180,3 +230,15 @@ class Material:
             self.data["im_m"] = np.append(self.data["im_m"], m2)
             self.data["real_eps"] = np.append(self.data["real_eps"], e1)
             self.data["im_eps"] = np.append(self.data["im_eps"], e2)
+
+    # ******************
+    # save opacity data to file
+    def save_refractive_index(self, fname):
+
+        print "Saving material to file " + fname
+        fout = open(fname, "w")
+        fout.write("# wlen(micron), Re(eps), Im(eps), Re(m), Im(m)\n")
+        for ii, wlen in enumerate(self.data["wlen"]):
+            row = [str(self.data[k][ii]) for k in ["wlen", "real_eps", "im_eps", "real_m", "im_m"]]
+            fout.write(" ".join(row) + "\n")
+        fout.close()
