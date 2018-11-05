@@ -1,10 +1,10 @@
 
 
 # *******************
-def constant(arg):
+def constant(constant_name):
     constants = {"clight": 2.99792458e10,
                  "hplanck_eV*s": 4.135667662e-15}
-    return constants[arg]
+    return constants[constant_name]
 
 
 # ****************
