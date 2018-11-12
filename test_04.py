@@ -5,24 +5,30 @@ import numpy as np
 # create object
 q = QabsManager()
 
+
+# load amorphous carbon, compute opacity. and plot
+core_carbon = q.load_material("data/eps_carb_P93.dat", ["wlen", "real_m", "im_m"])
+core_carbon.dust.rho_bulk = 2e0
+core_carbon.compute_kappa()
+
 # load and plot core
 core_silicate = q.load_material("data/eps_Sil_Oss92.dat", ["wlen", "real_m", "im_m"])
-#core_silicate.plot_ref_index("ref_index_core.png")
 
 # load and plot mantle
+mantle_thin = q.load_material("data/eps_H93.dat", ["wlen", "real_m", "im_m"], units="1/cm")
+mantle_thin.extrapolate(7.99e2)
+mantle_thin.add_impurity(core_carbon, 0.11)
+
+mantle_thick = q.load_material("data/eps_H93.dat", ["wlen", "real_m", "im_m"], units="1/cm")
+mantle_thick.extrapolate(7.99e2)
+mantle_thick.add_impurity(core_carbon, 0.013)
+
 mantle = q.load_material("data/eps_H93.dat", ["wlen", "real_m", "im_m"], units="1/cm")
-# mantle = q.load_material("data/eps_dirty_ice_P93.dat", ["wlen", "real_m", "im_m"], units="micron")
-# mantle = q.load_material("data/dirty.dat", ["wlen", "real_m", "im_m"], units="cm")
 
-mantle.add_plot_ref_index("ref_index_mantle.png", ptype="plot", marker=".")
+#mantle.add_plot_ref_index("ref_index_mantle.png", ptype="plot", marker=".")
 
-mantle.extrapolate(1e3)
-mantle.add_plot_ref_index("ref_index_mantle.png", ptype="plot", linestyle=":")
-mantle.save_refractive_index("ref_index_mantle.dat")
-
-# compute and plot core opacity
-# core.load_kappa("data/kappa_Oss94_naked.dat")
-# core.add_plot_kappa("core_kappa.png", postfix=" (Ossenkopf+1994)")
+#mantle_thick.extrapolate(1e3)
+#mantle.add_plot_ref_index("ref_index_mantle.png", ptype="plot", linestyle=":")
 
 
 # compute core opacity and plot
@@ -40,14 +46,7 @@ opt.load_kappa("data/kappa_oss94_v45.dat")
 opt.add_plot_kappa("kappa.png", postfix=" (ref, ratio 4.5)", linestyle=":")
 
 core_silicate.compute_kappa()
-# core_silicate.add_plot_kappa("kappa.png", postfix=" (Si Oss93)")
 
-
-# load amorphous carbon, compute opacity. and plot
-core_carbon = q.load_material("data/eps_carb_P93.dat", ["wlen", "real_m", "im_m"])
-core_carbon.dust.rho_bulk = 2e0
-core_carbon.compute_kappa()
-# core_carbon.add_plot_kappa("kappa.png", postfix=" (aC P93)")
 
 frac = np.array((1., 0.475862068965517))
 frac /= sum(frac)
@@ -56,13 +55,17 @@ merged = q.merge_kappa([core_silicate, core_carbon], frac)
 merged.add_plot_kappa("kappa.png", postfix=" (merged, ratio 0.0)",
                       linestyle="-")
 
-# make composite materials (Si+ice and aC+ice)
-composite_silicate = q.make_optical([core_silicate, mantle])
-composite_carbon = q.make_optical([core_carbon, mantle])
 
 # compute kappa for different shell thicknesses
-for vratio in [0.5, 4.5]:
+for ii, vratio in enumerate([0.5, 4.5]):
+    this_mantle = [mantle_thin, mantle_thick][ii]
+
+    # make composite materials (Si+ice and aC+ice)
+    composite_silicate = q.make_optical([core_silicate, this_mantle])
+    composite_carbon = q.make_optical([core_carbon, this_mantle])
+
     aratio = ((vratio + 1e0)**(1./3.) - 1e0)
+    # aratio = (vratio + 1e0)**(1./3.)
     composite_silicate.dust.aratio = aratio
     composite_silicate.compute_kappa()
 
@@ -72,5 +75,4 @@ for vratio in [0.5, 4.5]:
 
     merged = q.merge_kappa([composite_silicate, composite_carbon], frac)
     merged.add_plot_kappa("kappa.png", postfix=" (merged, ratio %.1f)" % vratio,
-                          linestyle="-")
-
+                          linestyle="-", xlim=(1e2, 1e3), ylim=(1e0, 3e2))
