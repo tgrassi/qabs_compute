@@ -203,7 +203,8 @@ class Optical:
 
         # check input radii
         if asizes[1] <= asizes[0]:
-            sys.exit("ERROR: the radius of the mantle cannot be smaller or equal the core!")
+            sys.exit("ERROR: the radius of the mantle cannot be smaller or equal "
+                     "to the core radius!")
 
         # local copy of data to work with
         data = materials[0].data
@@ -231,7 +232,6 @@ class Optical:
             ref_coat = complex(f_real_m(wlen), f_im_m(wlen))
             # call function to compute Qx, note wlen converted to cm
             qext, qsca, qbak = bhcoat_ph(asizes[0], asizes[1], ref_core, ref_coat, wlen*1e-4)
-
             # store output and compute derived quantities
             data_q_coat["qabs"].append(qext-qsca)
             data_q_coat["qsca"].append(qsca)
@@ -244,6 +244,22 @@ class Optical:
         # convert to numy arrays
         data_q_coat = {lab: np.array(x) for lab, x in data_q_coat.iteritems()}
         self.data = data_q_coat
+
+    # ****************************
+    # add spherical impurities with given volume filling factor.
+    # optical prpoerties of the impurities are taken from the material in the optical_impurity
+    # object
+    def add_impurity(self, optical_impurity, volume_filling_fraction):
+        import sys
+
+        # rise error if there are more materials in the optical object
+        if len(optical_impurity.materials) != 1:
+            sys.exit("ERROR: impurity optical must have only one material!")
+
+        # add optical impurities to the materials
+        material_impurity = optical_impurity.materials[0]
+        for material in self.materials:
+            material.add_impurity(material_impurity, volume_filling_fraction)
 
     # ****************************
     def extrapolate(self, wmax):
