@@ -16,14 +16,15 @@ core_silicate = q.load_material("data/eps_Sil_Oss92.dat", ["wlen", "real_m", "im
 
 # load and plot mantle
 mantle_thin = q.load_material("data/eps_H93.dat", ["wlen", "real_m", "im_m"], units="1/cm")
-mantle_thin.extrapolate(7.99e2)
-mantle_thin.add_impurity(core_carbon, 0.11)
+vacuum = q.vacuum_as(mantle_thin)
+# mantle_thin.extrapolate(7.99e2)
+mantle_thin.add_impurity([core_carbon, vacuum], [0.0, 0.2]) #.11
 
 mantle_thick = q.load_material("data/eps_H93.dat", ["wlen", "real_m", "im_m"], units="1/cm")
-mantle_thick.extrapolate(7.99e2)
-mantle_thick.add_impurity(core_carbon, 0.013)
+# mantle_thick.extrapolate(7.99e2)
+mantle_thick.add_impurity([core_carbon, vacuum], [0.0, 0.2]) #.013
 
-mantle = q.load_material("data/eps_H93.dat", ["wlen", "real_m", "im_m"], units="1/cm")
+# mantle = q.load_material("data/eps_H93.dat", ["wlen", "real_m", "im_m"], units="1/cm")
 
 #mantle.add_plot_ref_index("ref_index_mantle.png", ptype="plot", marker=".")
 
@@ -75,4 +76,4 @@ for ii, vratio in enumerate([0.5, 4.5]):
 
     merged = q.merge_kappa([composite_silicate, composite_carbon], frac)
     merged.add_plot_kappa("kappa.png", postfix=" (merged, ratio %.1f)" % vratio,
-                          linestyle="-", xlim=(1e2, 1e3), ylim=(1e0, 3e2))
+                          linestyle="-") #, xlim=(1e2, 1e3), ylim=(1e0, 3e2))
