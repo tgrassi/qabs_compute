@@ -39,6 +39,18 @@ class QabsManager:
 
         return opt
 
+    # *******************
+    @staticmethod
+    def vacuum_as(opt):
+        from copy import deepcopy as copy
+        opt_vac = copy(opt)
+        opt_vac.materials = [opt_vac.materials[0]]
+        opt_vac.materials[0].data["real_m"][:] = 1e0
+        opt_vac.materials[0].data["im_m"][:] = 0e0
+        opt_vac.materials[0].data["real_eps"][:] = 1e0
+        opt_vac.materials[0].data["im_eps"][:] = 0e0
+        return opt_vac
+
     # *****************
     # merge fname1 and fname 2 to fname_out, labs1 and labs2 are
     # the column labels (that must contain wlen assumed to be the
