@@ -249,17 +249,18 @@ class Optical:
     # add spherical impurities with given volume filling factor.
     # optical prpoerties of the impurities are taken from the material in the optical_impurity
     # object
-    def add_impurity(self, optical_impurity, volume_filling_fraction):
+    def add_impurity(self, optical_impurity_list, volume_filling_fraction_list):
         import sys
 
-        # rise error if there are more materials in the optical object
-        if len(optical_impurity.materials) != 1:
-            sys.exit("ERROR: impurity optical must have only one material!")
+        for optical_impurity in optical_impurity_list:
+            # rise error if there are more materials in the optical object
+            if len(optical_impurity.materials) != 1:
+                sys.exit("ERROR: impurity optical must have only one material!")
 
         # add optical impurities to the materials
-        material_impurity = optical_impurity.materials[0]
         for material in self.materials:
-            material.add_impurity(material_impurity, volume_filling_fraction)
+            material.add_impurity([x.materials[0] for x in optical_impurity_list],
+                                  volume_filling_fraction_list)
 
     # ****************************
     def extrapolate(self, wmax):
