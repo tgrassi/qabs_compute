@@ -243,30 +243,64 @@ class Material:
     # ***********************
     # add an spherical impurities with given volume filling factor.
     # optical properties of the impurities are taken from material_impurity
-    def add_impurity(self, material_impurity, volume_filling_factor):
+    def add_impurity(self, material_impurity_list, volume_filling_factor_list):
         from scipy.interpolate import interp1d
-        from numpy import sqrt
+        import numpy as np
+        import sys
 
+        # convert argument to list if not
+        if type(material_impurity_list) is not list:
+            material_impurity_list = [material_impurity_list]
+
+        # convert argument to list if not
+        if type(volume_filling_factor_list) is not list:
+            volume_filling_factor_list = [volume_filling_factor_list]
+
+        feps1 = []
+        feps2 = []
         # interpolate real and imaginary dielectric functions
-        feps1 = interp1d(material_impurity.data["wlen"], material_impurity.data["real_eps"])
-        feps2 = interp1d(material_impurity.data["wlen"], material_impurity.data["im_eps"])
+        for material_impurity in material_impurity_list:
+            f1 = interp1d(material_impurity.data["wlen"], material_impurity.data["real_eps"])
+            f2 = interp1d(material_impurity.data["wlen"], material_impurity.data["im_eps"])
+            feps1.append(f1)
+            feps2.append(f2)
 
-        # alias name for the volume filling factor
-        vff = volume_filling_factor
+        # number of impurities
+        n_impurities = len(material_impurity_list)
+        # np array of volume filling factors
+        delta = np.array(volume_filling_factor_list)
+        # sum of impurities
+        fsum = sum(delta)
+
+        # check amount of impurities
+        if fsum > 0.5:
+            sys.exit("ERROR: volume filling factor of impurities exceeds 50% of total volume!")
+
+        # loop on frequencies to add impurities
         for ii, wlen in enumerate(self.data["wlen"]):
-            # complex impurities material dielectric
-            eps = complex(feps1(wlen), feps2(wlen))
-            # complex matrix material dielectric
-            eps_m = complex(self.data["real_eps"][ii], self.data["im_eps"][ii])
+            eps_m = self.data["real_eps"][ii] + 1j * self.data["im_eps"][ii]
+            beta = np.zeros(n_impurities)
+            eps_list = np.zeros(n_impurities, dtype=np.complex)
+            # loop on impurities to compute beta
+            for jj in range(n_impurities):
+                eps_list[jj] = feps1[jj](wlen) + 1j * feps2[jj](wlen)
+                beta[jj] = 3e0 * eps_m / (eps_list[jj] + 2e0 * eps_m)
 
-            # Bruggemann rule, see Bohren+Huffmann 1983, eq. 8.50
-            g = vff * (eps - eps_m) / (eps + 2e0 * eps_m)
-            eps_av = eps_m * (1e0 + 3e0 * g / (1e0 - g))
+            # derived quantities
+            sbete = sum(delta * beta * eps_list)
+            sbet = sum(delta * beta)
+
+            # average eps
+            # eps_av = ((1e0 - fsum) * eps_m + sbete) / (1e0 - fsum + sbet)
+            sfe = sum(delta * eps_list) + (1e0 - sum(delta)) * eps_m
+            sfde = sum(delta / eps_list) + (1e0 - sum(delta)) / eps_m
+            eps_av = 0.5 * (sfe + 1e0 / sfde)
 
             # set new dielectric
             self.data["real_eps"][ii] = eps1 = eps_av.real
             self.data["im_eps"][ii] = eps2 = eps_av.imag
+
             # compute refractive index from dielectric
-            cconj = sqrt(eps1**2 + eps2**2)
-            self.data["real_m"][ii] = sqrt((cconj + eps1) / 2e0)
-            self.data["im_m"][ii] = sqrt((cconj - eps1) / 2e0)
+            cconj = np.sqrt(eps1**2 + eps2**2)
+            self.data["real_m"][ii] = np.sqrt((cconj + eps1) / 2e0)
+            self.data["im_m"][ii] = np.sqrt((cconj - eps1) / 2e0)
