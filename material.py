@@ -157,76 +157,81 @@ class Material:
         self.data = data
 
     # ***********************
-    def extrapolate(self, wmax, nlast=70):
+    def extrapolate(self, wmax, nlast=50):
         import numpy as np
-        import sys
         from scipy.optimize import curve_fit
-        from lmfit import minimize, Parameters, Parameter
-
-        def ffw(x, c_wp, c_wo, c_gamma, c_off):
-            fun = c_off + c_wp**2 / (c_wo**2 - x**2 - 1j * x * c_gamma)
-            return fun
-
-        def residualsi(paramz, x, data):
-            c_wp = paramz['wp'].value
-            c_wo = paramz['wo'].value
-            c_gamma = paramz['gamma'].value
-            c_off = paramz['off'].value
-
-            diff = ffw(x, c_wp, c_wo, c_gamma, c_off) - data
-
-            return diff.view(np.float32)
+        from numpy import log10
 
         clight = 3e10
         th = self.data["wlen"][-nlast:] * 1e-4
         th = 2e0 * np.pi * clight / th
-        #ydata = (self.data["real_m"][-nlast:] + 1j * self.data["im_m"][-nlast:])**2 - 1e0
         ydata = self.data["real_eps"][-nlast:] + 1j * self.data["im_eps"][-nlast:]
 
-        params = Parameters()
-        params.add("wp", value=1e1**13.47, min=1e1**13.35, max=1e1**13.55)
-        params.add("wo", value=1e1**13.58, min=1e1**13.5, max=1e1**13.7)
-        params.add("gamma", value=1e1**13.32, min=1e1**13.25, max=1e1**13.4)
-        params.add("off", value=2.48, min=2.2, max=2.6)
+        th = [x for ii, x in enumerate(th) if ydata.imag[ii] > 0e0]
+        ydata = [x for x in ydata.imag if x > 0e0]
 
-        result = minimize(residualsi, params, args=(th, ydata), method="leastsq", nan_policy='omit')
-        wp = 1e1**13.35 #result.params["wp"].value
-        wo = 1e1**13.51 # result.params["wo"].value
-        gamma = 1e1**12.92 #result.params["gamma"].value
-        off = 2.52 #result.params["off"].value
+        def fw(xx, a, b):
+            return a * xx + b
 
-        for k in result.params.keys():
-            print result.params[k]
-            print np.log10(result.params[k].value)
-
-        zdata = ffw(th, wp, wo, gamma, off)
+        p, sm = curve_fit(fw, log10(th), log10(ydata))
+        zdata = 1e1**fw(log10(th), p[0], p[1])
 
         import matplotlib.pyplot as plt
-        plt.clf()
-        plt.plot(th, ydata.real)
-        plt.plot(th, zdata.real)
-        plt.show()
 
         plt.clf()
-        plt.plot(th, ydata.imag)
-        plt.plot(th, zdata.imag)
+        plt.plot(th, ydata, marker="o")
+        plt.plot(th, zdata)
+        plt.xlabel("omega / Hz")
         plt.show()
+
+        npoints = 200
+
+        self.data["wlen"] = self.data["wlen"][:-nlast]
+        self.data["real_eps"] = self.data["real_eps"][:-nlast]
+        self.data["im_eps"] = self.data["im_eps"][:-nlast]
+        self.data["real_m"] = self.data["real_m"][:-nlast]
+        self.data["im_m"] = self.data["im_m"][:-nlast]
 
         wmax_data = self.data["wlen"][-1]
-        for wlen in np.linspace(wmax_data, wmax, 20):
-            ee = ffw(wlen * 1e-4, wp, wo, gamma, off)
-            e1 = np.real(ee)
-            e2 = 0e0
+        wextrap = np.linspace(wmax_data, wmax, npoints)
+        for wlen in wextrap:
+            e2 = 1e1 ** fw(log10(2e0 * np.pi * clight / (wlen * 1e-4)), p[0], p[1])
+            self.data["im_eps"] = np.append(self.data["im_eps"], e2)
+
+        ths = np.append(self.data["wlen"], wextrap) * 1e-4
+        ths = 2e0 * np.pi * clight / ths
+
+        def ff(xx, a1, a2):
+            return 1e1**(a1 * log10(xx) + a2)
+
+        for wlen in np.linspace(wmax_data, wmax, npoints):
+            thx = 2e0 * np.pi * clight / (wlen * 1e-4)
+            fint = np.array([xx for ii, xx in enumerate(self.data["im_eps"]) if ths[ii] != thx])
+            xint = np.array([xx for xx in ths if xx != thx])
+            #kk = 1e0 + 2e0 / np.pi * np.trapz(self.data["im_eps"] * ths / (ths**2 - thx**2), ths)
+            kk = 1e0 + 2e0 / np.pi * np.trapz(fint * xint / (xint ** 2 - thx ** 2), xint)
+            print wlen, kk
+            self.data["real_eps"] = np.append(self.data["real_eps"], kk)
+            self.data["wlen"] = np.append(self.data["wlen"], wlen)
+
+        plt.clf()
+        plt.plot(self.data["wlen"], self.data["real_eps"])
+        plt.show()
+
+        plt.clf()
+        plt.plot(self.data["wlen"], self.data["im_eps"])
+        plt.show()
+
+        for ii in range(npoints):
+            e1 = self.data["real_eps"][ii]
+            e2 = self.data["im_eps"][ii]
 
             cconj = np.sqrt(e1 ** 2 + e2 ** 2)
             m1 = np.sqrt((cconj + e1) / 2e0)
             m2 = np.sqrt((cconj - e1) / 2e0)
 
-            self.data["wlen"] = np.append(self.data["wlen"], wlen)
             self.data["real_m"] = np.append(self.data["real_m"], m1)
             self.data["im_m"] = np.append(self.data["im_m"], m2)
-            self.data["real_eps"] = np.append(self.data["real_eps"], e1)
-            self.data["im_eps"] = np.append(self.data["im_eps"], e2)
 
     # ******************
     # save opacity data to file
@@ -267,6 +272,8 @@ class Material:
 
         # number of impurities
         n_impurities = len(material_impurity_list)
+        if n_impurities > 1:
+            sys.exit("ERROR: more than 1 impurity!")
         # np array of volume filling factors
         delta = np.array(volume_filling_factor_list)
         # sum of impurities
@@ -278,23 +285,34 @@ class Material:
 
         # loop on frequencies to add impurities
         for ii, wlen in enumerate(self.data["wlen"]):
+            print wlen
             eps_m = self.data["real_eps"][ii] + 1j * self.data["im_eps"][ii]
-            beta = np.zeros(n_impurities)
-            eps_list = np.zeros(n_impurities, dtype=np.complex)
+            # beta = np.zeros(n_impurities)
+            # eps_list = np.zeros(n_impurities, dtype=np.complex)
             # loop on impurities to compute beta
-            for jj in range(n_impurities):
-                eps_list[jj] = feps1[jj](wlen) + 1j * feps2[jj](wlen)
-                beta[jj] = 3e0 * eps_m / (eps_list[jj] + 2e0 * eps_m)
+            # for jj in range(n_impurities):
+            #    eps_list[jj] = feps1[jj](wlen) + 1j * feps2[jj](wlen)
+            #    beta[jj] = 3e0 * eps_m / (eps_list[jj] + 2e0 * eps_m)
 
             # derived quantities
-            sbete = sum(delta * beta * eps_list)
-            sbet = sum(delta * beta)
+            # sbete = sum(delta * beta * eps_list)
+            # sbet = sum(delta * beta)
+
+            def fbruggeman(eps_a, eps_b, f):
+                from numpy import sqrt
+
+                return 0.25 * (-eps_a + 2e0 * eps_b + 3e0 * eps_a * f - 3e0 * eps_b * f +
+                               sqrt(8e0 * eps_a * eps_b + (-eps_a + 2e0 * eps_b
+                                                           + 3e0 * eps_a * f - 3e0 * eps_b * f)**2))
+
+            eps_impurity = feps1[0](wlen) + 1j * feps2[0](wlen)
+            eps_av = fbruggeman(eps_impurity, eps_m, delta[0])
 
             # average eps
             # eps_av = ((1e0 - fsum) * eps_m + sbete) / (1e0 - fsum + sbet)
-            sfe = sum(delta * eps_list) + (1e0 - sum(delta)) * eps_m
-            sfde = sum(delta / eps_list) + (1e0 - sum(delta)) / eps_m
-            eps_av = 0.5 * (sfe + 1e0 / sfde)
+            # sfe = sum(delta * eps_list) + (1e0 - sum(delta)) * eps_m
+            # sfde = sum(delta / eps_list) + (1e0 - sum(delta)) / eps_m
+            # eps_av = 0.5 * (sfe + 1e0 / sfde)
 
             # set new dielectric
             self.data["real_eps"][ii] = eps1 = eps_av.real
