@@ -157,74 +157,142 @@ class Material:
         self.data = data
 
     # ***********************
-    def extrapolate(self, wmax, nlast=50):
+    # this function extrapolates to wmax (micron) the imaginary part of the eps
+    # assuming a 1/wlen profile for the last nlast data point. The real part is
+    # computed using Kramers-Kroning on the whole domain.
+    # Note, that the extrapolation is pretty arbitary and might lead to
+    # unexpected results. Use with caution.
+    def extrapolate(self, wmax, nlast):
         import numpy as np
         from scipy.optimize import curve_fit
         from numpy import log10
 
-        clight = 3e10
-        th = self.data["wlen"][-nlast:] * 1e-4
-        th = 2e0 * np.pi * clight / th
+        clight = 3e10  # cm/s
+        th = self.data["wlen"][-nlast:] * 1e-4  # cm
+        th = 2e0 * np.pi * clight / th  # Hz
+
+        # eps from data, get only the final nlast data
         ydata = self.data["real_eps"][-nlast:] + 1j * self.data["im_eps"][-nlast:]
 
+        # only include eps with strictly positive imaginary part
         th = [x for ii, x in enumerate(th) if ydata.imag[ii] > 0e0]
         ydata = [x for x in ydata.imag if x > 0e0]
 
+        # function to fit is linear in log space (power-law)
         def fw(xx, a, b):
             return a * xx + b
 
+        # fit in log space
         p, sm = curve_fit(fw, log10(th), log10(ydata))
+
+        # compute fit data to compare with original data
         zdata = 1e1**fw(log10(th), p[0], p[1])
 
         import matplotlib.pyplot as plt
 
         plt.clf()
-        plt.plot(th, ydata, marker="o")
-        plt.plot(th, zdata)
-        plt.xlabel("omega / Hz")
-        plt.show()
+        plt.plot(th, ydata, marker="o", label="data")
+        plt.plot(th, zdata, label="fit")
+        plt.xlabel("$\omega$ / Hz")
+        plt.ylabel("Im(eps)")
+        plt.legend(loc="best")
+        png_file_fit = "extrapolation_fit_img_eps.png"
+        plt.savefig(png_file_fit)
+        print "Imaginary part fit saved to " + png_file_fit
 
+        # number of point to extrapolate after last data point
         npoints = 200
 
+        from copy import copy
+        # copy data for later comparison
+        wlen_old = copy(self.data["wlen"])
+        real_eps_old = copy(self.data["real_eps"])
+        im_eps_old = copy(self.data["im_eps"])
+
+        # take only the final nlast data
         self.data["wlen"] = self.data["wlen"][:-nlast]
         self.data["real_eps"] = self.data["real_eps"][:-nlast]
         self.data["im_eps"] = self.data["im_eps"][:-nlast]
         self.data["real_m"] = self.data["real_m"][:-nlast]
         self.data["im_m"] = self.data["im_m"][:-nlast]
 
+        # get last data point from where to extrapolate
         wmax_data = self.data["wlen"][-1]
+
+        # sequence of points to extrapolate
         wextrap = np.linspace(wmax_data, wmax, npoints)
+
+        # extrapolate imaginary part
+        e2_extrap = []
         for wlen in wextrap:
             e2 = 1e1 ** fw(log10(2e0 * np.pi * clight / (wlen * 1e-4)), p[0], p[1])
-            self.data["im_eps"] = np.append(self.data["im_eps"], e2)
+            e2_extrap.append(e2)
 
+        # compute frequency
         ths = np.append(self.data["wlen"], wextrap) * 1e-4
         ths = 2e0 * np.pi * clight / ths
 
-        def ff(xx, a1, a2):
-            return 1e1**(a1 * log10(xx) + a2)
-
-        for wlen in np.linspace(wmax_data, wmax, npoints):
+        # apply Kronig-Kramer
+        e1_extrap = []
+        for wlen in wextrap:
+            # compute frequncy for the integral
             thx = 2e0 * np.pi * clight / (wlen * 1e-4)
-            fint = np.array([xx for ii, xx in enumerate(self.data["im_eps"]) if ths[ii] != thx])
-            xint = np.array([xx for xx in ths if xx != thx])
-            #kk = 1e0 + 2e0 / np.pi * np.trapz(self.data["im_eps"] * ths / (ths**2 - thx**2), ths)
+            # skip poles
+            fint = np.array([xx for ii, xx in enumerate(np.append(self.data["im_eps"], e2_extrap)) if ths[ii] != thx])
+            xint = np.array([xx for ii, xx in enumerate(ths) if ths[ii] != thx])
+
+            # reverse array if xdata are descending
+            if xint[0] > xint[1]:
+                fint = fint[::-1]
+                xint = xint[::-1]
+
+            # do KK
             kk = 1e0 + 2e0 / np.pi * np.trapz(fint * xint / (xint ** 2 - thx ** 2), xint)
-            print wlen, kk
-            self.data["real_eps"] = np.append(self.data["real_eps"], kk)
+
+            # check KK sign
+            if kk < 0e0:
+                sys.exit("ERROR: negative real part of eps from Kramers-Kronig!")
+
+            # store eps real part
+            e1_extrap.append(kk)
+
+        # remove first data computed with KK
+        e1_extrap = np.array(e1_extrap[1:])
+        e2_extrap = e2_extrap[1:]
+        wextrap = wextrap[1:]
+
+        # normalize extrapolation to the last data point
+        # e1_extrap += self.data["real_eps"][-1] - e1_extrap[0]
+
+        marker = None
+
+        plt.clf()
+        plt.semilogx(wlen_old, real_eps_old, marker=marker, label="data")
+        plt.semilogx(wextrap, e1_extrap, marker=marker, label="extrapolation")
+        plt.xlabel("$\lambda$ / $\mu$m")
+        plt.ylabel("Re(eps)")
+        png_file_fit = "extrapolation_real_eps.png"
+        plt.savefig(png_file_fit)
+        print "Real part extrapolation saved to " + png_file_fit
+
+        plt.clf()
+        plt.semilogx(wlen_old, im_eps_old, marker=marker, label="data")
+        plt.semilogx(wextrap, e2_extrap, marker=marker, label="extrapolation")
+        plt.xlabel("$\lambda$ / $\mu$m")
+        plt.ylabel("Im(eps)")
+        png_file_fit = "extrapolation_img_eps.png"
+        plt.savefig(png_file_fit)
+        print "Imaginary part extrapolation saved to " + png_file_fit
+
+        # add extrapolate data to material arrays
+        for ii, wlen in enumerate(wextrap):
+            e1 = e1_extrap[ii]
+            e2 = e2_extrap[ii]
+            wlen = wextrap[ii]
+
             self.data["wlen"] = np.append(self.data["wlen"], wlen)
-
-        plt.clf()
-        plt.plot(self.data["wlen"], self.data["real_eps"])
-        plt.show()
-
-        plt.clf()
-        plt.plot(self.data["wlen"], self.data["im_eps"])
-        plt.show()
-
-        for ii in range(npoints):
-            e1 = self.data["real_eps"][ii]
-            e2 = self.data["im_eps"][ii]
+            self.data["real_eps"] = np.append(self.data["real_eps"], e1)
+            self.data["im_eps"] = np.append(self.data["im_eps"], e2)
 
             cconj = np.sqrt(e1 ** 2 + e2 ** 2)
             m1 = np.sqrt((cconj + e1) / 2e0)
