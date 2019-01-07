@@ -166,6 +166,71 @@ class QabsManager:
         self.opticals[name] = opt
         return opt
 
+    # ********************
+    @staticmethod
+    def merge_opticals(opticals, method, frac):
+        from scipy.interpolate import interp1d
+        import numpy as np
+        import sys
+
+        if method != "Maxwell-Garnett":
+            sys.exit("ERROR: only Maxwell-Garnett method available!")
+
+        if len(opticals) != 2:
+            sys.exit("ERROR: you can merge only two opticals!")
+
+        wmin = 0e0
+        wmax = 9e99
+        wlens = []
+        feps1 = []
+        feps2 = []
+        for optical in opticals:
+            if len(optical.materials) != 1:
+                sys.exit("ERROR: you can merge only opticals with a single material!")
+            wlen = optical.materials[0].data["wlen"]
+            wmin = max(wmin, min(wlen))
+            wmax = min(wmax, max(wlen))
+            wlens.append(wlen)
+
+            eps1 = optical.materials[0].data["real_eps"]
+            eps2 = optical.materials[0].data["im_eps"]
+            feps1.append(interp1d(wlen, eps1))
+            feps2.append(interp1d(wlen, eps2))
+
+        wlen_all = sorted(set(np.concatenate(wlens)))
+        wlen_all = [x for x in wlen_all if x >= wmin]
+        wlen_all = [x for x in wlen_all if x <= wmax]
+        wlen_all = np.array(wlen_all)
+
+        eps1_m = []
+        eps2_m = []
+        for wlen in wlen_all:
+            epsa = feps1[0](wlen) + 1j * feps2[0](wlen)
+            epsb = feps1[1](wlen) + 1j * feps2[1](wlen)
+            eterm = (epsb - epsa) / (epsb + 2e0 * epsa)
+            # eps = epsa * (1e0 + 3e0 * frac * eterm / (1e0 - frac * eterm))
+            eps = epsb * (epsa + 2e0 * epsb + 2e0 * frac*(epsa-epsb)) \
+                / (epsa + 2e0 * epsb - frac * (epsa - epsb))
+            eps1_m.append(eps.real)
+            eps2_m.append(eps.imag)
+
+        eps1_m = np.array(eps1_m)
+        eps2_m = np.array(eps2_m)
+
+        material = Material()
+        material.data["wlen"] = wlen_all
+        material.data["real_eps"] = eps1_m
+        material.data["im_eps"] = eps2_m
+        cconj = np.sqrt(eps1_m ** 2 + eps2_m ** 2)
+        m1 = np.sqrt((cconj + eps1_m) / 2e0)
+        m2 = np.sqrt((cconj - eps1_m) / 2e0)
+
+        material.data["real_m"] = m1
+        material.data["im_m"] = m2
+        opt = Optical(material)
+
+        return opt
+
     # *****************
     @staticmethod
     def merge_kappa(opticals, fractions):
