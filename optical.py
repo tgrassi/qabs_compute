@@ -263,7 +263,7 @@ class Optical:
                                   volume_filling_fraction_list)
 
     # ****************************
-    def extrapolate(self, wmax):
+    def extrapolate(self, wmax, nlast=45):
 
         for ii, material in enumerate(self.materials):
-            self.materials[ii].extrapolate(wmax)
+            self.materials[ii].extrapolate(wmax, nlast=nlast)
