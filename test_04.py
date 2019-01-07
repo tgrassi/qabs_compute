@@ -8,7 +8,7 @@ q = QabsManager()
 
 # load amorphous carbon, compute opacity. and plot
 core_carbon = q.load_material("data/eps_carb_P93.dat", ["wlen", "real_m", "im_m"])
-# core_carbon.extrapolate(wmax)
+# core_carbon.extrapolate(1e3, nlast=30)
 core_carbon.plot_ref_index("ref.png")
 core_carbon.dust.rho_bulk = 2e0
 core_carbon.compute_kappa()
@@ -23,10 +23,14 @@ mantle_thin = q.load_material("data/eps_H93.dat", ["wlen", "real_m", "im_m"], un
 mantle_thin.extrapolate(wmax)
 mantle_thin.add_impurity([core_carbon], [.11])
 
+mantle_thin.save_refractive_index("ref_extrap_thin.dat")
+
 mantle_thick = q.load_material("data/eps_H93.dat", ["wlen", "real_m", "im_m"], units="1/cm")
 mantle_thick.extrapolate(wmax)
 mantle_thick.add_impurity([core_carbon], [0.013])
 mantle_thick.plot_ref_index("ref.png")
+
+mantle_thick.save_refractive_index("ref_extrap_thick.dat")
 
 # mantle = q.load_material("data/eps_H93.dat", ["wlen", "real_m", "im_m"], units="1/cm")
 
@@ -78,10 +82,8 @@ for ii, vratio in enumerate([0.5, 4.5]):
     composite_carbon.dust.rho_bulk = 2e0
     composite_carbon.compute_kappa()
 
-    print composite_silicate.dust.data["kappa"]
-    print composite_carbon.dust.data["kappa"]
     merged = q.merge_kappa([composite_silicate, composite_carbon], frac)
 
     merged.add_plot_kappa("kappa.png", postfix=" (merged, ratio %.1f)" % vratio,
                           linestyle="-") #, xlim=(1e2, 1e3), ylim=(1e0, 3e2))
-    asdkjals
+
