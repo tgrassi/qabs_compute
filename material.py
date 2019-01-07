@@ -269,7 +269,7 @@ class Material:
         plt.clf()
         plt.semilogx(wlen_old, real_eps_old, marker=marker, label="data")
         plt.semilogx(wextrap, e1_extrap, marker=marker, label="extrapolation")
-        plt.xlabel("$\lambda$ / $\mu$m")
+        plt.xlabel("$\\lambda$ / $\\mu$m")
         plt.ylabel("Re(eps)")
         png_file_fit = "extrapolation_real_eps.png"
         plt.savefig(png_file_fit)
@@ -278,7 +278,7 @@ class Material:
         plt.clf()
         plt.semilogx(wlen_old, im_eps_old, marker=marker, label="data")
         plt.semilogx(wextrap, e2_extrap, marker=marker, label="extrapolation")
-        plt.xlabel("$\lambda$ / $\mu$m")
+        plt.xlabel("$\\lambda$ / $\\mu$m")
         plt.ylabel("Im(eps)")
         png_file_fit = "extrapolation_img_eps.png"
         plt.savefig(png_file_fit)
