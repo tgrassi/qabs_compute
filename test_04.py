@@ -8,7 +8,6 @@ q = QabsManager()
 
 # load amorphous carbon, compute opacity. and plot
 core_carbon = q.load_material("data/eps_carb_P93.dat", ["wlen", "real_m", "im_m"])
-# core_carbon.extrapolate(1e3, nlast=30)
 core_carbon.plot_ref_index("ref.png")
 core_carbon.dust.rho_bulk = 2e0
 core_carbon.compute_kappa()
@@ -32,13 +31,9 @@ mantle_thick.plot_ref_index("ref.png")
 
 mantle_thick.save_refractive_index("ref_extrap_thick.dat")
 
-# mantle = q.load_material("data/eps_H93.dat", ["wlen", "real_m", "im_m"], units="1/cm")
+ice_catania = q.constant_material(5e1, wmax, (1.27 + 1j * 4e-3))
 
-#mantle.add_plot_ref_index("ref_index_mantle.png", ptype="plot", marker=".")
-
-#mantle_thick.extrapolate(1e3)
-#mantle.add_plot_ref_index("ref_index_mantle.png", ptype="plot", linestyle=":")
-
+ice_lab = q.load_material("eps_CO.dat", ["wlen", "real_eps", "im_eps"])
 
 # compute core opacity and plot
 q.clear_plots()
@@ -66,15 +61,14 @@ merged.add_plot_kappa("kappa.png", postfix=" (merged, ratio 0.0)",
 
 
 # compute kappa for different shell thicknesses
-for ii, vratio in enumerate([0.5, 4.5]):
-    this_mantle = [mantle_thin, mantle_thick][ii]
-
+for ii, vratio in enumerate([0.5, 4.5, 0.5, 4.5, 0.5, 4.5]):
+    this_mantle = [mantle_thin, mantle_thick, ice_catania, ice_catania, ice_lab, ice_lab][ii]
+    linestyle = ["-", "-", "--", "--", ":", ":"][ii]
     # make composite materials (Si+ice and aC+ice)
     composite_silicate = q.make_optical([core_silicate, this_mantle])
     composite_carbon = q.make_optical([core_carbon, this_mantle])
 
     aratio = ((vratio + 1e0)**(1./3.) - 1e0)
-    # aratio = (vratio + 1e0)**(1./3.)
     composite_silicate.dust.aratio = aratio
     composite_silicate.compute_kappa()
 
@@ -85,5 +79,5 @@ for ii, vratio in enumerate([0.5, 4.5]):
     merged = q.merge_kappa([composite_silicate, composite_carbon], frac)
 
     merged.add_plot_kappa("kappa.png", postfix=" (merged, ratio %.1f)" % vratio,
-                          linestyle="-") #, xlim=(1e2, 1e3), ylim=(1e0, 3e2))
+                          linestyle=linestyle, xlim=(1e2, 1e3), ylim=(1e0, 3e2))
 
