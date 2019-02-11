@@ -41,7 +41,8 @@ class Dust:
 
     # *******************
     # add a plot to the current opacity plot
-    def add_plot_kappa(self, fname, postfix="", linestyle="-", xlim=None, ylim=None, color=None):
+    def add_plot_kappa(self, fname, postfix="", linestyle="-", xlim=None, ylim=None, color=None,
+                       linewidth=1, legend_columns=1):
         import matplotlib.pyplot as plt
         font = {'family': 'sans', 'weight': 'normal', 'size': '12'}
         plt.rc('font', **font)
@@ -49,14 +50,14 @@ class Dust:
         print "Plotting kappa to " + fname + "..."
 
         plt.loglog(self.data["wlen"], self.data["kappa"], label=postfix,
-                   linestyle=linestyle, color=color)
+                   linestyle=linestyle, color=color, linewidth=linewidth)
         plt.xlabel("$\\lambda$ / $\\mu$m")
         plt.ylabel("$\\kappa$ / [cm$^2$ g$^{-1}$]")
         if xlim is not None:
             plt.xlim(xlim)
         if ylim is not None:
             plt.ylim(ylim)
-        plt.legend(loc="best")
+        plt.legend(loc="best", ncol=legend_columns, fontsize=10)
         plt.tight_layout()
         plt.savefig(fname)
 
