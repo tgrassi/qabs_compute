@@ -1,69 +1,35 @@
-from utils import QabsManager
-from optical import Optical
-import numpy as np
+from qabsmanager import QabsManager
 
 # create object
 q = QabsManager()
 
-opt = Optical(None)
+q.clear_plots()
 
-opt.load_kappa("data/kappa_oss94_v00.dat")
-opt.add_plot_kappa("kappa.png", postfix=" (ref, ratio 0.0)", linestyle=":")
+# load core data from file
+core = q.load_material("data/eps_carb_P93.dat", labels=["wlen", "real_m", "im_m"])
 
-opt.load_kappa("data/kappa_oss94_v05.dat")
-opt.add_plot_kappa("kappa.png", postfix=" (ref, ratio 0.5)", linestyle=":")
+# compute opacity for core material
+core.compute_kappa()
 
-opt.load_kappa("data/kappa_oss94_v45.dat")
-opt.add_plot_kappa("kappa.png", postfix=" (ref, ratio 4.5)", linestyle=":")
-
-# load core optical properties
-core_silicate = q.load_material("data/eps_Sil_Oss92.dat", ["wlen", "real_m", "im_m"])
-core_carbon = q.load_material("data/eps_carb_P93.dat", ["wlen", "real_m", "im_m"])
-
-# load mantle optical properties
-mantle = q.load_material("eps_CO.dat", labs=["wlen", "real_eps", "im_eps"])
-
-# add mantle to cores
-composite_silicate = q.make_optical([core_silicate, mantle])
-composite_carbon = q.make_optical([core_carbon, mantle])
-
-core_silicate.compute_kappa()
-core_carbon.dust.rho_bulk = 2e0
-core_carbon.compute_kappa()
-
-# volume fractions
-frac = np.array((1., 0.475862068965517))
-frac /= sum(frac)
-
-merged = q.merge_kappa([core_silicate, core_carbon], frac)
-merged.add_plot_kappa("kappa.png", postfix=" (merged, ratio 0.0)",
-                      linestyle="-")
-
-# compute kappa for different shell thicknesses
-for vratio in [0.5, 4.5]:
-    # size ratio from volume ratio
-    aratio = ((vratio + 1e0)**(1./3.) - 1e0)
-
-    # silicate + mantle opacity
-    composite_silicate.dust.aratio = aratio
-    composite_silicate.compute_kappa()
-
-    # carbon + mantle opacity
-    composite_carbon.dust.aratio = aratio
-    composite_carbon.dust.rho_bulk = 2e0  # g/cm3
-    composite_carbon.compute_kappa()
-
-    merged = q.merge_kappa([composite_silicate, composite_carbon], frac)
-    merged.add_plot_kappa("kappa.png", postfix=" (merged, ratio %.1f)" % vratio,
-                          xlim=(1e2, None), ylim=(None, 1e2))
+# plot core material opacity
+core.add_plot_kappa("kappa_03.png", postfix="bare")
 
 
+# load ice data from file
+mantle = q.load_material("data/eps_H93.dat", labels=["wlen", "real_m", "im_m"])
 
+# create new material from core and mantle
+composite = q.make_optical([core, mantle])
 
+# volume ratio to size ratio
+vratio = 0.5
+aratio = ((vratio + 1e0) ** (1. / 3.) - 1e0)
 
+# set size ratio silicon/ice material
+composite.dust.aratio = aratio
 
+# compute opacity of the composite material
+composite.compute_kappa()
 
-
-
-
-
+# plot opacity
+composite.add_plot_kappa("kappa_03.png", postfix="coated", xlim=(5e1, 1e3), ylim=(1, 1e3))
