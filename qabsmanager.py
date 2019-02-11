@@ -340,18 +340,23 @@ class QabsManager:
     def benchmark(self, fname="benchmark_q.png"):
 
         # load material
-        opt = self.load_material("data/eps_Sil.dat", labs=["wlen", "real_eps1", "im_eps",
-                                                           "real_m1", "im_m"])
+        opt = self.load_material("data/eps_Sil.dat", labels=["wlen", "real_eps1", "im_eps",
+                                                             "real_m1", "im_m"])
+
+        # clear plots
+        self.clear_plots()
 
         # compute Qabs for given size, cm
         opt.compute_q(1e-7)
-        # plot computed
-        opt.plot_q(fname)
+
+        # plot computed Qabs and Qsca
+        opt.add_plot_q(fname, colors=["tab:blue", "tab:green"])
 
         # load Qabs from file to compare
         opt.load_q("data/Sil_21_1e3.dat")
-        # over-plot loaded
-        opt.add_plot_q(fname, linestyle="--")
+
+        # over-plot loaded Qabs
+        opt.add_plot_q(fname, linestyle="--", colors=["tab:orange", "tab:red"])
 
     # *******************
     @staticmethod
