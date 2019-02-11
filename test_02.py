@@ -1,4 +1,4 @@
-from utils import QabsManager
+from qabsmanager import QabsManager
 
 # create object
 q = QabsManager()
