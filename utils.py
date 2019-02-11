@@ -39,6 +39,38 @@ class QabsManager:
 
         return opt
 
+    # ******************
+    def constant_material(self, wmin, wmax, val, ngrid=100, what="eps"):
+        import numpy as np
+        import sys
+
+        mat = Material()
+        mat.data["wlen"] = np.linspace(wmin, wmax, ngrid)
+
+        if what == "eps":
+            mat.data["real_eps"] = np.array([val.real] * ngrid)
+            mat.data["im_eps"] = np.array([val.imag] * ngrid)
+            e1 = mat.data["real_eps"]
+            e2 = mat.data["im_eps"]
+            mat.data["im_m"] = ((-e1 + np.sqrt(e1 ** 2 + e2 ** 2)) / 2.) ** 0.5
+            mat.data["real_m"] = e2 / 2. / mat.data["im_m"]
+        elif what == "m":
+            mat.data["real_m"] = np.array([val.real] * ngrid)
+            mat.data["im_m"] = np.array([val.imag] * ngrid)
+            mat.data["real_eps"] = mat.data["real_m"]**2 - mat.data["im_m"]**2
+            mat.data["im_eps"] = 2e0 * mat.data["real_m"] * mat.data["im_m"]
+        else:
+            sys.exit("ERROR: unknown optical property in constant material!")
+
+        opt = Optical(mat)
+
+        # add materials to dictionary
+        name = "constant material"
+        self.materials[name] = mat
+        self.opticals[name] = opt
+
+        return opt
+
     # *******************
     @staticmethod
     def vacuum_as(opt):
