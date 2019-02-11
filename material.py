@@ -28,13 +28,13 @@ class Material:
     # *******************************
     # load refractive index data from a refractive index file named fname
     # labs are the column labels, where
-    # wlen: wavelength in micron
-    # real_eps1: real part of epsilon-1
-    # real_eps: real part of epsilon
-    # im_eps: imaginary part of epsilon
-    # real_m1: real part of refractive index-1
-    # real_m: real part of refractive index
-    # im_m: imaginary part of refractive index
+    #  wlen: wavelength in micron
+    #  real_eps1: real part of epsilon-1
+    #  real_eps: real part of epsilon
+    #  im_eps: imaginary part of epsilon
+    #  real_m1: real part of refractive index-1
+    #  real_m: real part of refractive index
+    #  im_m: imaginary part of refractive index
     # Note: you only need wlen, real_m (or real_m1), and im_m
     # Returns a dictionary of numpy arrays with keys as labs
     def load(self, fname, labs, units):
