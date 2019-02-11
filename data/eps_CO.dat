@@ -1,7 +1,5 @@
-#CO ice 4 min dep                   
-# 1.000E-01 = radius (micron)
-#1201 1.000E+03 1.000E-03 = NWAV, w_1 (micron), w_NWAV (micron)
-#w(micron)  Re(eps-1)  Im(eps)
+# CO ice 4 min dep, Giuliano+2019
+# w(micron)  Re(eps)  Im(eps)
 21025.2672149899	1.69	2.60E-06
 10512.633607495	1.43	2.40E-01
 7008.4224049966	1.69	2.60E-06
