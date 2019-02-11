@@ -71,17 +71,23 @@ class Optical:
 
     # **************************
     # add optical properties plot
-    def add_plot_q(self, fname, ptype="loglog", linestyle="-", postfix=""):
+    def add_plot_q(self, fname, ptype="loglog", linestyle="-", postfix="", what=None,
+                   colors=None):
         import matplotlib.pyplot as plt
+
+        if colors is None:
+            colors = ["tab:blue", "tab:orange", "tab:green"]
+
+        if what is None:
+            what = ["abs", "sca"]
 
         print "Plotting Q* to " + fname + "..."
         if type(ptype) is str:
             ptype = eval("plt." + ptype)
 
-        ptype(self.data["wlen"], self.data["qabs"], label="$Q_{abs}$" + postfix,
-              linestyle=linestyle)
-        ptype(self.data["wlen"], self.data["qsca"], label="$Q_{sca}$" + postfix,
-              linestyle=linestyle)
+        for ii, w in enumerate(what):
+            ptype(self.data["wlen"], self.data["q" + w], label="$Q_{" + w + "}$" + postfix,
+                  linestyle=linestyle, color=colors[ii])
 
         plt.xlabel("$\\lambda$ / $\\mu$m")
         plt.ylabel("$Q_x$")
