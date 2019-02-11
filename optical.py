@@ -22,9 +22,11 @@ class Optical:
 
     # **************************
     # add opacity plot to current plt session, postfix will be added in the legend
-    def add_plot_kappa(self, fname, postfix="", linestyle="-", xlim=None, ylim=None, color=None):
+    def add_plot_kappa(self, fname, postfix="", linestyle="-", xlim=None, ylim=None, color=None,
+                       linewidth=1, legend_columns=1):
         self.dust.add_plot_kappa(fname, postfix=postfix, linestyle=linestyle,
-                                 xlim=xlim, ylim=ylim, color=color)
+                                 xlim=xlim, ylim=ylim, color=color, linewidth=linewidth,
+                                 legend_columns=legend_columns)
 
     # ******************
     # save opacity to file
