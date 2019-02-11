@@ -3,7 +3,7 @@ This code computes Qabs, Qsca, and Qext from the refractive index or the dialect
 It also compute opacity for coated materials.      
 
 ### Getting started ###
-Basic usage is (see `test_01.py` file)
+Basic usage to load a material and compute its opacity for a grain size distribution is (see `test_01.py` file)
 ```python
 from qabsmanager import QabsManager
 
