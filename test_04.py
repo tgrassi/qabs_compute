@@ -46,7 +46,7 @@ mantle_thick.add_impurity([core_carbon], [0.013])
 
 
 # set constant optical properties value from 5e1 micron to wmax micron
-ice_catania = q.constant_material(5e1, wmax, (1.27 + 1j * 4e-3))
+ice_catania = q.constant_material(5e1, wmax, (1.27 + 1j * 4e-3), what="m")
 
 # load optical constant from material
 ice_lab = q.load_material("data/eps_CO.dat", labels=["wlen", "real_eps", "im_eps"])
@@ -95,7 +95,7 @@ for ii, vratio in enumerate([0.5, 4.5, 0.5, 4.5, 0.5, 4.5]):
     lab = ["OH94 comp", "OH94 comp", "BP98", "BP98", "this work", "this work"][ii]
     # label width
     if lab == "this work":
-        lw = 3
+        lw = 2
     else:
         lw = 1
 
@@ -117,6 +117,8 @@ for ii, vratio in enumerate([0.5, 4.5, 0.5, 4.5, 0.5, 4.5]):
 
     # merge carbon and silicate opacities
     merged = q.merge_kappa([composite_silicate, composite_carbon], frac)
+
+    merged.save_kappa("kappa_%s_%.1f.dat" % (lab, vratio))
 
     # add opacity to plot
     merged.add_plot_kappa("kappa.png", postfix="%s, $v=%.1f$" % (lab, vratio), color=color,
