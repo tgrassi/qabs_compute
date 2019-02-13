@@ -221,24 +221,29 @@ class Optical:
 
         # get interpolating function with optical properties
         # of the mantle material
-        f_real_m = interp1d(data_coat["wlen"], data_coat["real_m"])
-        f_im_m = interp1d(data_coat["wlen"], data_coat["im_m"])
+        f_coat_real_m = interp1d(data_coat["wlen"], data_coat["real_m"])
+        f_coat_im_m = interp1d(data_coat["wlen"], data_coat["im_m"])
+
+        f_core_real_m = interp1d(data["wlen"], data["real_m"])
+        f_core_im_m = interp1d(data["wlen"], data["im_m"])
 
         # get optical properties range of the optical properties
         # of the coating material
-        wlen_min = data_coat["wlen"][0]
-        wlen_max = data_coat["wlen"][-1]
+        wlen_min = max(data_coat["wlen"][0], data["wlen"][0])
+        wlen_max = min(data_coat["wlen"][-1], data["wlen"][-1])
 
         # initialize data dictionary
         data_q_coat = {"wlen": [], "qabs": [], "qsca": [], "qbak": []}
+        wlen_all = sorted(np.concatenate((data["wlen"], data_coat["wlen"])))
         # loop on wavelengths to compute Qx
-        for ii, wlen in enumerate(data["wlen"]):
+        for ii, wlen in enumerate(wlen_all):
             # cannot calculate outside ranges
             if wlen < wlen_min or wlen > wlen_max:
                 continue
             # prepare complex refractive index
-            ref_core = complex(data["real_m"][ii], data["im_m"][ii])
-            ref_coat = complex(f_real_m(wlen), f_im_m(wlen))
+            # ref_core = complex(data["real_m"][ii], data["im_m"][ii])
+            ref_core = complex(f_core_real_m(wlen), f_core_im_m(wlen))
+            ref_coat = complex(f_coat_real_m(wlen), f_coat_im_m(wlen))
             # call function to compute Qx, note wlen converted to cm
             qext, qsca, qbak = bhcoat_ph(asizes[0], asizes[1], ref_core, ref_coat, wlen*1e-4)
             # store output and compute derived quantities
