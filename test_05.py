@@ -1,0 +1,114 @@
+from qabsmanager import QabsManager
+from optical import Optical
+import numpy as np
+
+# create manager object
+q = QabsManager()
+
+
+# load amorphous carbon optical data
+core_carbon = q.load_material("data/eps_carb_P93.dat", labels=["wlen", "real_m", "im_m"])
+
+# set carbon dust bulk density to 2 g/cm3, default is 2.9 g/cm3 (silicon)
+core_carbon.dust.rho_bulk = 2e0
+
+# compute opacity for bare carbon
+core_carbon.compute_kappa()
+
+# store the maximum wavelength found for carbon
+wmax = max(core_carbon.materials[0].data["wlen"])
+
+
+# load silicon material from file
+core_silicate = q.load_material("data/eps_Sil_Oss92.dat", labels=["wlen", "real_m", "im_m"])
+
+
+# load mantle from Hudgins+1993
+mantle_thin = q.load_material("data/eps_H93.dat", labels=["wlen", "real_m", "im_m"], units="1/cm")
+
+# extrapolate mantle to wmax
+# Note: the extrapolation algorithm is tuned for the current problem,
+# and might get wrong results when applied to different data
+mantle_thin.extrapolate(wmax)
+
+# add spherical impurities to mantle_thin with core_carbon optical properties, and volume ratio 0.11
+mantle_thin.add_impurity([core_carbon], [.11])
+
+
+# load mantle to create another optical object
+mantle_thick = q.load_material("data/eps_H93.dat", labels=["wlen", "real_m", "im_m"], units="1/cm")
+
+# extrapolate (see comments above)
+mantle_thick.extrapolate(wmax)
+
+# add spherical impurities with core_carbon optical properties, and volume ratio 0.0113
+mantle_thick.add_impurity([core_carbon], [0.013])
+
+
+# set constant optical properties value from 5e1 micron to wmax micron
+ice_catania = q.constant_material(5e1, wmax, (1.27 + 1j * 4e-3), what="m")
+
+# load optical constant from material
+ice_lab = q.load_material("data/eps_CO.dat", labels=["wlen", "real_eps", "im_eps"])
+
+
+# clear plots
+q.clear_plots()
+
+# create optical object to load opacities from file (Ossenkopf+Henning 1994)
+opt = Optical(None)
+
+# load and plot bare grain opacity
+opt.load_kappa("data/kappa_oss94_v00.dat")
+opt.add_plot_kappa("kappa.pdf", postfix="OH94, $f_v=0$", linestyle=":", color="tab:green")
+
+# load and plot 0.5 volume ratio opacity
+opt.load_kappa("data/kappa_oss94_v05.dat")
+opt.add_plot_kappa("kappa.pdf", postfix="OH94, $f_v=0.5$", linestyle=":", color="tab:blue")
+
+# load and plot 4.5 volume ratio opacity
+opt.load_kappa("data/kappa_oss94_v45.dat")
+opt.add_plot_kappa("kappa.pdf", postfix="OH94, $f_v=4.5$", linestyle=":", color="tab:orange")
+
+
+# compute bare silicate opacity
+core_silicate.compute_kappa()
+
+# compute silicate and carbon mixture ratio
+frac = np.array((1., 0.475862068965517))
+frac /= sum(frac)
+
+# compute kappa for different shell thicknesses and materials
+for ii, vratio in enumerate([0.5, 4.5, 0.5, 4.5]):
+    # list of mantles optical properties
+    this_mantle = [ice_catania, ice_catania, ice_lab, ice_lab][ii]
+
+    # line properties
+    linestyle = ["--", "--", "-", "-"][ii]
+    color = ["tab:blue", "tab:orange"][ii % 2]
+    lab = ["BP98", "BP98", "This work", "This work"][ii]
+
+    # make composite materials (Si+ice and aC+ice)
+    composite_silicate = q.make_optical([core_silicate, this_mantle])
+    composite_carbon = q.make_optical([core_carbon, this_mantle])
+
+    # define size ratio
+    aratio = ((vratio + 1e0)**(1./3.) - 1e0)
+
+    # set size ratio silicon/ice material
+    composite_silicate.dust.aratio = aratio
+    composite_silicate.compute_kappa()
+
+    # set size ratio carbon/ice material
+    composite_carbon.dust.aratio = aratio
+    composite_carbon.dust.rho_bulk = 2e0  # g/cm3
+    composite_carbon.compute_kappa()
+
+    # merge carbon and silicate opacities
+    merged = q.merge_kappa([composite_silicate, composite_carbon], frac)
+
+    merged.save_kappa("kappa_%s_%.1f.dat" % (lab, vratio))
+
+    # add opacity to plot
+    merged.add_plot_kappa("kappa.pdf", postfix="%s, $f_v=%.1f$" % (lab, vratio), color=color,
+                          linestyle=linestyle, linewidth=1, xlim=(1e2, 9e2), ylim=(1e0, 7e1))
