@@ -47,17 +47,20 @@ class Dust:
         font = {'family': 'sans', 'weight': 'normal', 'size': '12'}
         plt.rc('font', **font)
 
+        params = {'axes.labelsize': '18'}
+        plt.rcParams.update(params)
+
         print "Plotting kappa to " + fname + "..."
 
         plt.loglog(self.data["wlen"], self.data["kappa"], label=postfix,
                    linestyle=linestyle, color=color, linewidth=linewidth)
-        plt.xlabel("$\\lambda$ / $\\mu$m")
-        plt.ylabel("$\\kappa$ / [cm$^2$ g$^{-1}$]")
+        plt.xlabel("$\\lambda$, $\\mu$m")
+        plt.ylabel("$\\kappa$, cm$^2$ g$^{-1}$")
         if xlim is not None:
             plt.xlim(xlim)
         if ylim is not None:
             plt.ylim(ylim)
-        plt.legend(loc="best", ncol=legend_columns, fontsize=10)
+        plt.legend(loc="best", ncol=legend_columns, fontsize=12)
         plt.tight_layout()
         plt.savefig(fname)
 
