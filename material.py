@@ -159,13 +159,14 @@ class Material:
     # ***********************
     # this function extrapolates to wmax (micron) the imaginary part of the eps
     # assuming a 1/wlen profile for the last nlast data point. The real part is
-    # computed using Kramers-Kroning on the whole domain.
-    # Note, that the extrapolation is pretty arbitary and might lead to
+    # computed using Kramers-Kronig on the whole domain.
+    # Note, that the extrapolation is pretty arbitrary and might lead to
     # unexpected results. Use with caution.
     def extrapolate(self, wmax, nlast):
         import numpy as np
         from scipy.optimize import curve_fit
         from numpy import log10
+        import sys
 
         clight = 3e10  # cm/s
         th = self.data["wlen"][-nlast:] * 1e-4  # cm
