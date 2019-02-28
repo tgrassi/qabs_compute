@@ -60,15 +60,18 @@ opt = Optical(None)
 
 # load and plot bare grain opacity
 opt.load_kappa("data/kappa_oss94_v00.dat")
-opt.add_plot_kappa("kappa.pdf", postfix="OH94, $f_v=0$", linestyle=":", color="tab:green")
+opt.add_plot_kappa("kappa.pdf", postfix="OH94, $f_v=0$", linestyle=":",
+                   linewidth=2, color="k")
 
 # load and plot 0.5 volume ratio opacity
 opt.load_kappa("data/kappa_oss94_v05.dat")
-opt.add_plot_kappa("kappa.pdf", postfix="OH94, $f_v=0.5$", linestyle=":", color="tab:blue")
+opt.add_plot_kappa("kappa.pdf", postfix="OH94, $f_v=0.5$", linestyle=":",
+                   linewidth=2, color="tab:blue")
 
 # load and plot 4.5 volume ratio opacity
 opt.load_kappa("data/kappa_oss94_v45.dat")
-opt.add_plot_kappa("kappa.pdf", postfix="OH94, $f_v=4.5$", linestyle=":", color="tab:orange")
+opt.add_plot_kappa("kappa.pdf", postfix="OH94, $f_v=4.5$", linestyle=":",
+                   linewidth=2, color="tab:orange")
 
 
 # compute bare silicate opacity
@@ -111,4 +114,4 @@ for ii, vratio in enumerate([0.5, 4.5, 0.5, 4.5]):
 
     # add opacity to plot
     merged.add_plot_kappa("kappa.pdf", postfix="%s, $f_v=%.1f$" % (lab, vratio), color=color,
-                          linestyle=linestyle, linewidth=1, xlim=(1e2, 9e2), ylim=(1e0, 7e1))
+                          linestyle=linestyle, linewidth=1.5, xlim=(1e2, 9e2), ylim=(1e0, 7e1))
