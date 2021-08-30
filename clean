@@ -16,9 +16,9 @@ for root, dirnames, filenames in os.walk('.'):
                 fname = root + "/" + fle
                 os.unlink(fname)
                 if verbose:
-                    print "removing ./"+fname
+                    print("removing ./"+fname)
                 rmCount += 1
 
 
-print str(rmCount) + " elements cleaned"
-print "done!"
+print(str(rmCount) + " elements cleaned")
+print("done!")

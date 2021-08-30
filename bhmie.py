@@ -29,7 +29,7 @@ def bhmie(x, refrel, nang):
     tau = zeros(nang, dtype=complex128)
 
     if nang > 1000:
-        print 'error: nang > mxnang=1000 in bhmie'
+        print('error: nang > mxnang=1000 in bhmie')
         return
 
     # Require NANG>1 in order to calculate scattering intensities
@@ -61,7 +61,7 @@ def bhmie(x, refrel, nang):
     nstop = int(xstop)
 
     if nmx > nmxx:
-        print "error: nmx > nmxx=%f for |m|x=%f" % (nmxx, ymod)
+        print("error: nmx > nmxx=%f for |m|x=%f" % (nmxx, ymod))
         return
 
     dang = .5*pii / (nang-1)

@@ -26,8 +26,8 @@ class QabsManager:
             name = "material_" + str(len(self.materials))
 
         if name in self.materials and not force:
-            print "ERROR: material " + name + " already present!"
-            print "Change name or use force=True"
+            print("ERROR: material " + name + " already present!")
+            print("Change name or use force=True")
             sys.exit()
 
         mat = Material(fname, labels, name, units)
@@ -111,12 +111,12 @@ class QabsManager:
                 arow = [float(x) for x in srow.split(" ") if x != ""]
                 for ii, ll in enumerate(labs):
                     data[ll].append(arow[ii])
-            return {k: np.array(v) for k, v in data.iteritems()}
+            return {k: np.array(v) for k, v in data.items()}
 
         # create interpolator from data
         def create_interpolator(data):
             from scipy.interpolate import interp1d
-            return {k: interp1d(data["wlen"], v) for k, v in data.iteritems() if k != "wlen"}
+            return {k: interp1d(data["wlen"], v) for k, v in data.items() if k != "wlen"}
 
         # load data
         data1 = load_data(fname1, labs1)
@@ -171,9 +171,9 @@ class QabsManager:
             fout.write(" ".join([str(x) for x in vrow]) + "\n")
         fout.close()
 
-        print fname1 + " merged to " + fname2 + " in " + fname_out
-        print "total points %d, interpolated points %d" % (count_total_points,
-                                                           count_interpolated_points)
+        print(fname1 + " merged to " + fname2 + " in " + fname_out)
+        print("total points %d, interpolated points %d" % (count_total_points,
+                                                           count_interpolated_points))
 
     # *****************
     # create new optical material from others
@@ -322,18 +322,18 @@ class QabsManager:
     # write a database report
     def report(self):
         # loop on standard data and coating
-        for name, material in self.materials.iteritems():
+        for name, material in self.materials.items():
             data = material.data
             # if missing data skip
             if "wlen" not in data:
                 continue
             # small table with data
-            print "*********"
-            print "Name:", name
-            print "File:", data["fname"]
-            print "Number of points:", len(data["wlen"])
-            print "Range wavelength (micron): %e, %e" % (min(data["wlen"]), max(data["wlen"]))
-            print "Range frequency (Hz): %e, %e" % (min(data["freq"]), max(data["freq"]))
+            print("*********")
+            print("Name:", name)
+            print("File:", data["fname"])
+            print("Number of points:", len(data["wlen"]))
+            print("Range wavelength (micron): %e, %e" % (min(data["wlen"]), max(data["wlen"])))
+            print("Range frequency (Hz): %e, %e" % (min(data["freq"]), max(data["freq"])))
 
     # ************************
     # perform a benchmark

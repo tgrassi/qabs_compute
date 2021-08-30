@@ -52,7 +52,7 @@ class Optical:
             labs = ["wlen", "qabs", "qsca", "gcos"]
 
         self.data = {ll: [] for ll in labs}
-        for row in open(fname, "rb"):
+        for row in open(fname):
             srow = row.strip()
             if srow.startswith("#"):
                 continue
@@ -81,7 +81,7 @@ class Optical:
         if what is None:
             what = ["abs", "sca"]
 
-        print "Plotting Q* to " + fname + "..."
+        print("Plotting Q* to " + fname + "...")
         if type(ptype) is str:
             ptype = eval("plt." + ptype)
 
@@ -106,7 +106,7 @@ class Optical:
     def add_plot_ref_index(self, fname, ptype="loglog", linestyle="-", marker=None):
         import matplotlib.pyplot as plt
 
-        print "Plotting refractive index to " + fname
+        print("Plotting refractive index to " + fname)
 
         if type(ptype) is str:
             ptype = eval("plt." + ptype)
@@ -194,7 +194,7 @@ class Optical:
         data_q["freq"] = micron_to_hz(data_q["wlen"])
 
         # convert to numy arrays
-        data_q = {lab: np.array(x) for lab, x in data_q.iteritems()}
+        data_q = {lab: np.array(x) for lab, x in data_q.items()}
 
         # copy data to attribute
         self.data = data_q
@@ -256,7 +256,7 @@ class Optical:
         data_q_coat["freq"] = micron_to_hz(data_q_coat["wlen"])
 
         # convert to numy arrays
-        data_q_coat = {lab: np.array(x) for lab, x in data_q_coat.iteritems()}
+        data_q_coat = {lab: np.array(x) for lab, x in data_q_coat.items()}
         self.data = data_q_coat
 
     # ****************************

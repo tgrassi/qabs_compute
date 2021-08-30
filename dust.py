@@ -20,17 +20,17 @@ class Dust:
     # ******************
     # print report to screen
     def report(self):
-        print "**************"
-        print "Dust report"
-        print "Material(s):", [x.name for x in self.optical.materials]
-        print "min size, cm: %e" % self.amin
-        print "max size, cm: %e" % self.amax
-        print "MNR expoent: %f" % self.pexp
-        print "bulk density, g/cm3: %e" % self.rho_bulk
-        print "bins:", self.ngrid
-        print "coating layer (if any), cm: %e" % self.alayer
-        print "mantle / core ratio (if any): %e" % self.aratio
-        print "**************"
+        print("**************")
+        print("Dust report")
+        print("Material(s):", [x.name for x in self.optical.materials])
+        print("min size, cm: %e" % self.amin)
+        print("max size, cm: %e" % self.amax)
+        print("MNR expoent: %f" % self.pexp)
+        print("bulk density, g/cm3: %e" % self.rho_bulk)
+        print("bins:", self.ngrid)
+        print("coating layer (if any), cm: %e" % self.alayer)
+        print("mantle / core ratio (if any): %e" % self.aratio)
+        print("**************")
 
     # ******************
     # plot opacity to file
@@ -50,7 +50,7 @@ class Dust:
         params = {'axes.labelsize': '18'}
         plt.rcParams.update(params)
 
-        print "Plotting kappa to " + fname + "..."
+        print("Plotting kappa to " + fname + "...")
 
         plt.loglog(self.data["wlen"], self.data["kappa"], label=postfix,
                    linestyle=linestyle, color=color, linewidth=linewidth)
@@ -78,9 +78,9 @@ class Dust:
     # load data from file
     def load_kappa(self, fname):
 
-        print "Loading kappa from " + fname + "..."
+        print("Loading kappa from " + fname + "...")
         self.data = {"wlen": [], "kappa": []}
-        for row in open(fname, "rb"):
+        for row in open(fname):
             srow = row.strip()
             if srow.startswith("#"):
                 continue
@@ -89,7 +89,7 @@ class Dust:
             wlen, kappa = [float(x) for x in srow.split(" ") if x != ""]
             self.data["wlen"].append(wlen)
             self.data["kappa"].append(kappa)
-        print "done"
+        print("done")
 
     # *********************
     # compute opacity for the current dust
@@ -111,6 +111,7 @@ class Dust:
     # distribution uses ngrid points
     def compute_kappa_bare(self, verbose=1):
         import numpy as np
+        from tqdm import tqdm
 
         # power-law exponent + 4 for integrals
         pexp4 = self.pexp + 4.
@@ -119,13 +120,11 @@ class Dust:
         arange = np.logspace(np.log10(self.amin), np.log10(self.amax), self.ngrid)
 
         if verbose > 0:
-            print "Computing opacity..."
+            print("Computing opacity...")
 
         qdata = []
         # loop on grain sizes
-        for ii, asize in enumerate(arange):
-            if verbose > 0:
-                print round(ii * 1e2 / (self.ngrid - 1), 1), "%"
+        for ii, asize in enumerate(tqdm(arange)):
             self.optical.compute_q(asize)
             qabs = self.optical.data["qabs"]
             qdata.append(qabs)
@@ -161,6 +160,7 @@ class Dust:
     def compute_kappa_coating(self, verbose=1):
         import numpy as np
         import sys
+        from tqdm import tqdm
 
         # power-law exponent + 4 for integrals
         pexp4 = self.pexp + 4.
@@ -169,7 +169,7 @@ class Dust:
         arange = np.logspace(np.log10(self.amin), np.log10(self.amax), self.ngrid)
 
         if verbose > 0:
-            print "Computing opacity with coating..."
+            print("Computing opacity with coating...")
 
         if self.alayer is None and self.aratio is None:
             sys.exit("ERROR: for composite materials you should set dust.alayer or dust.aratio")
@@ -180,9 +180,7 @@ class Dust:
         qdata = []
         arange_full = []
         # loop on grain sizes
-        for ii, asize in enumerate(arange):
-            if verbose > 0:
-                print round(ii * 1e2 / (self.ngrid - 1), 1), "%"
+        for ii, asize in enumerate(tqdm(arange)):
             if self.alayer is not None:
                 asize_coat = asize + self.alayer
             elif self.aratio is not None:

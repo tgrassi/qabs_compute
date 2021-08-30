@@ -42,7 +42,7 @@ class Material:
         import numpy as np
         from utility import hz_to_ev, micron_to_hz, ev_to_micron, wavenumber_to_micron
 
-        print "Loading from " + fname + "..."
+        print("Loading from " + fname + "...")
 
         # wavelength is mandatory
         if "wlen" not in labs:
@@ -53,14 +53,14 @@ class Material:
 
         for lab in labs:
             if lab not in allowed_labs:
-                print "ERROR: found unknown label " + lab
-                print " allowed labels are", allowed_labs
+                print("ERROR: found unknown label " + lab)
+                print(" allowed labels are", allowed_labs)
                 sys.exit()
 
         # init data dictionary
         data = {lab: [] for lab in labs}
         # loop on file to read
-        for row in open(fname, "rb"):
+        for row in open(fname):
             srow = row.strip().replace("\t", " ")
             if row.startswith("#") or srow == "":
                 continue
@@ -73,28 +73,28 @@ class Material:
 
         # convert to units if necessary
         if units.lower() == "micron":
-            print "Found units " + units
+            print("Found units " + units)
         elif units.lower() == "ev":
-            print "Found units " + units + ", converting to micron"
+            print("Found units " + units + ", converting to micron")
             data["wlen"] = ev_to_micron(data["wlen"])
         elif units.lower() == "1/cm":
-            print "Found units " + units + ", converting to micron"
+            print("Found units " + units + ", converting to micron")
             data["wlen"] = wavenumber_to_micron(data["wlen"])
         elif units.lower() == "cm":
-            print "Found units " + units + ", converting to micron"
+            print("Found units " + units + ", converting to micron")
             data["wlen"] = np.array(data["wlen"]) * 1e4
         else:
             sys.exit("ERROR: unknown units " + units)
 
         # reverse data if needed
         if data["wlen"][0] > data["wlen"][1]:
-            print "reversing data..."
+            print("reversing data...")
             irev = -1
         else:
             irev = 1
 
         # lists to numpy arrays
-        data = {lab: np.array(x[::irev]) for lab, x in data.iteritems()}
+        data = {lab: np.array(x[::irev]) for lab, x in data.items()}
 
         # convert to Hz
         data["freq"] = micron_to_hz(data["wlen"])
@@ -104,18 +104,18 @@ class Material:
 
         # find real_m from real_m1 if needed
         if "real_m1" in data and "real_m" not in data:
-            print "NOTE: real_m computed from real_m1"
+            print("NOTE: real_m computed from real_m1")
             data["real_m"] = data["real_m1"] + 1e0
 
         # find real_eps from real_eps1 if needed
         if "real_eps1" in data and "real_eps" not in data:
-            print "NOTE: real_eps computed from real_eps1"
+            print("NOTE: real_eps computed from real_eps1")
             data["real_eps"] = data["real_eps1"] + 1e0
 
         # compute real_m and im_m from eps
         if "real_eps" in data and "im_eps" in data:
-            print "NOTE: real_m_computed computed from real_eps and im_eps"
-            print "NOTE: im_m_computed computed from real_eps and im_eps"
+            print("NOTE: real_m_computed computed from real_eps and im_eps")
+            print("NOTE: im_m_computed computed from real_eps and im_eps")
             # compute refractive index from eps
             e1 = data["real_eps"]
             e2 = data["im_eps"]
@@ -124,23 +124,23 @@ class Material:
 
         # compute im_m from eps if missing
         if "im_m" not in data:
-            print "NOTE: im_m computed from im_eps_computed"
+            print("NOTE: im_m computed from im_eps_computed")
             data["im_m"] = data["im_m_computed"]
 
         # compute real_m from eps if missing
         if "real_m" not in data:
-            print "NOTE: real_m computed from real_eps_computed"
+            print("NOTE: real_m computed from real_eps_computed")
             data["real_m"] = data["real_m_computed"]
 
         # compute im_m1 from im_m if missing
         if "real_m1" not in data:
-            print "NOTE: real_m1 computed from real_m"
+            print("NOTE: real_m1 computed from real_m")
             data["real_m1"] = data["real_m"] - 1e0
 
         # compute eps if missing from im_m and real_m
         if "real_eps" not in data:
-            print "NOTE: real_eps computed from real_m and im_m"
-            print "NOTE: im_eps computed from real_m and im_m"
+            print("NOTE: real_eps computed from real_m and im_m")
+            print("NOTE: im_eps computed from real_m and im_m")
             data["real_eps"] = data["real_m"]**2 - data["im_m"]**2
             data["im_eps"] = 2e0 * data["real_m"] * data["im_m"]
 
@@ -151,7 +151,7 @@ class Material:
         # store file name
         data["fname"] = fname
 
-        print "Loading from " + fname + " done!"
+        print("Loading from " + fname + " done!")
 
         # copy data to attribute
         self.data = data
@@ -199,7 +199,7 @@ class Material:
         plt.legend(loc="best")
         png_file_fit = "extrapolation_fit_img_eps.png"
         plt.savefig(png_file_fit)
-        print "Imaginary part fit saved to " + png_file_fit
+        print("Imaginary part fit saved to " + png_file_fit)
 
         # number of point to extrapolate after last data point
         npoints = 200
@@ -274,7 +274,7 @@ class Material:
         plt.ylabel("Re(eps)")
         png_file_fit = "extrapolation_real_eps.png"
         plt.savefig(png_file_fit)
-        print "Real part extrapolation saved to " + png_file_fit
+        print("Real part extrapolation saved to " + png_file_fit)
 
         plt.clf()
         plt.semilogx(wlen_old, im_eps_old, marker=marker, label="data")
@@ -283,7 +283,7 @@ class Material:
         plt.ylabel("Im(eps)")
         png_file_fit = "extrapolation_img_eps.png"
         plt.savefig(png_file_fit)
-        print "Imaginary part extrapolation saved to " + png_file_fit
+        print("Imaginary part extrapolation saved to " + png_file_fit)
 
         # add extrapolate data to material arrays
         for ii, wlen in enumerate(wextrap):
@@ -306,7 +306,7 @@ class Material:
     # save opacity data to file
     def save_refractive_index(self, fname):
 
-        print "Saving material to file " + fname
+        print("Saving material to file " + fname)
         fout = open(fname, "w")
         fout.write("# wlen(micron), Re(eps), Im(eps), Re(m), Im(m)\n")
         for ii, wlen in enumerate(self.data["wlen"]):
@@ -354,7 +354,7 @@ class Material:
 
         # loop on frequencies to add impurities
         for ii, wlen in enumerate(self.data["wlen"]):
-            print wlen
+            print(wlen)
             eps_m = self.data["real_eps"][ii] + 1j * self.data["im_eps"][ii]
             # beta = np.zeros(n_impurities)
             # eps_list = np.zeros(n_impurities, dtype=np.complex)
