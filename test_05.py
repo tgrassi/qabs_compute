@@ -49,7 +49,7 @@ mantle_thick.add_impurity([core_carbon], [0.013])
 ice_catania = q.constant_material(5e1, wmax, (1.27 + 1j * 4e-3), what="m")
 
 # load optical constant from material
-ice_lab = q.load_material("data/eps_CO.dat", labels=["wlen", "real_eps", "im_eps"])
+ice_lab = q.load_material("data/eps_CO_2019.dat", labels=["wlen", "real_eps", "im_eps"])
 
 
 # clear plots
