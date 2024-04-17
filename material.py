@@ -49,7 +49,7 @@ class Material:
             sys.exit("ERROR: wlen label is needed when loading data!")
 
         allowed_labs = ["wlen", "real_m", "im_m", "real_m1", "real_eps",
-                        "im_eps", "real_eps1"]
+                        "im_eps", "real_eps1", "alpha", "dummy"]
 
         for lab in labs:
             if lab not in allowed_labs:
@@ -83,6 +83,9 @@ class Material:
         elif units.lower() == "cm":
             print("Found units " + units + ", converting to micron")
             data["wlen"] = np.array(data["wlen"]) * 1e4
+        elif units.lower() == "thz":
+            print("Found units " + units + ", converting to micron")
+            data["wlen"] = micron_to_hz(data["wlen"]) / 1e12
         else:
             sys.exit("ERROR: unknown units " + units)
 
@@ -122,6 +125,14 @@ class Material:
             data["im_m_computed"] = ((-e1 + np.sqrt(e1 ** 2 + e2 ** 2)) / 2.) ** 0.5
             data["real_m_computed"] = e2 / 2. / data["im_m_computed"]
 
+        if "alpha" in data and "im_eps" not in data:
+            print("NOTE: im_eps computed from alpha")
+            data["im_eps"] = 2e0 * np.pi * data["alpha"] * data["wlen"]
+            e1 = data["real_eps"]
+            e2 = data["im_eps"]
+            data["im_m_computed"] = ((-e1 + np.sqrt(e1 ** 2 + e2 ** 2)) / 2.) ** 0.5
+            data["real_m_computed"] = e2 / 2. / data["im_m_computed"]
+
         # compute im_m from eps if missing
         if "im_m" not in data:
             print("NOTE: im_m computed from im_eps_computed")
@@ -150,6 +161,7 @@ class Material:
 
         # store file name
         data["fname"] = fname
+
 
         print("Loading from " + fname + " done!")
 
@@ -310,7 +322,7 @@ class Material:
         fout = open(fname, "w")
         fout.write("# wlen(micron), Re(eps), Im(eps), Re(m), Im(m)\n")
         for ii, wlen in enumerate(self.data["wlen"]):
-            row = [str(self.data[k][ii]) for k in ["wlen", "real_eps", "im_eps", "real_m", "im_m"]]
+            row = ["%e" % self.data[k][ii] for k in ["wlen", "real_eps", "im_eps", "real_m", "im_m"]]
             fout.write(" ".join(row) + "\n")
         fout.close()
 
