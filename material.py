@@ -40,7 +40,7 @@ class Material:
     def load(self, fname, labs, units):
         import sys
         import numpy as np
-        from utility import hz_to_ev, micron_to_hz, ev_to_micron, wavenumber_to_micron
+        from utility import hz_to_ev, micron_to_hz, ev_to_micron, wavenumber_to_micron, thz_to_micron
 
         print("Loading from " + fname + "...")
 
@@ -85,7 +85,7 @@ class Material:
             data["wlen"] = np.array(data["wlen"]) * 1e4
         elif units.lower() == "thz":
             print("Found units " + units + ", converting to micron")
-            data["wlen"] = micron_to_hz(data["wlen"]) / 1e12
+            data["wlen"] = thz_to_micron(data["wlen"])
         else:
             sys.exit("ERROR: unknown units " + units)
 
@@ -125,13 +125,12 @@ class Material:
             data["im_m_computed"] = ((-e1 + np.sqrt(e1 ** 2 + e2 ** 2)) / 2.) ** 0.5
             data["real_m_computed"] = e2 / 2. / data["im_m_computed"]
 
-        if "alpha" in data and "im_eps" not in data:
+        if "alpha" in data and "im_eps" not in data and "real_m" in data:
             print("NOTE: im_eps computed from alpha")
-            data["im_eps"] = 2e0 * np.pi * data["alpha"] * data["wlen"]
-            e1 = data["real_eps"]
-            e2 = data["im_eps"]
-            data["im_m_computed"] = ((-e1 + np.sqrt(e1 ** 2 + e2 ** 2)) / 2.) ** 0.5
-            data["real_m_computed"] = e2 / 2. / data["im_m_computed"]
+            data["im_m"] = data["alpha"] * data["wlen"] / 1e4 / 2e0 / np.pi
+            data["real_eps"] = data["real_m"]**2 - data["im_m"]**2
+            data["im_eps"] = 2e0 * data["real_m"] * data["im_m"]
+            data["im_m_computed"] = data["im_m"]
 
         # compute im_m from eps if missing
         if "im_m" not in data:
