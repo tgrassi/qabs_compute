@@ -30,3 +30,10 @@ def ev_to_micron(xdata):
 def wavenumber_to_micron(xdata):
     import numpy as np
     return 1e4 / np.array(xdata)
+
+
+# **********************
+def thz_to_micron(xdata):
+    import numpy as np
+    xdata = np.array(xdata) * 1e12  # THz to Hz
+    return constant("clight") / xdata * 1e4  # Hz to micron
