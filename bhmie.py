@@ -1,4 +1,4 @@
-from numpy import *
+import numpy as np
 
 
 # modified for KROME, see original notes below
@@ -21,12 +21,12 @@ def bhmie(x, refrel, nang):
 
     nmxx = 150000
 
-    s1_1 = zeros(nang, dtype=complex128)
-    s1_2 = zeros(nang, dtype=complex128)
-    s2_1 = zeros(nang, dtype=complex128)
-    s2_2 = zeros(nang, dtype=complex128)
-    pi = zeros(nang, dtype=complex128)
-    tau = zeros(nang, dtype=complex128)
+    s1_1 = np.zeros(nang, dtype=np.complex128)
+    s1_2 = np.zeros(nang, dtype=np.complex128)
+    s2_1 = np.zeros(nang, dtype=np.complex128)
+    s2_2 = np.zeros(nang, dtype=np.complex128)
+    pi = np.zeros(nang, dtype=np.complex128)
+    tau = np.zeros(nang, dtype=np.complex128)
 
     if nang > 1000:
         print('error: nang > mxnang=1000 in bhmie')
@@ -36,12 +36,12 @@ def bhmie(x, refrel, nang):
     if nang < 2:
         nang = 2
 
-    pii = 4.*arctan(1.)
+    pii = 4.*np.arctan(1.)
     dx = x
 
     drefrl = refrel
     y = x*drefrl
-    ymod = abs(y)
+    ymod = np.abs(y)
 
     # Series expansion terminated after NSTOP terms
     # Logarithmic derivatives calculated from NMX on down
@@ -49,7 +49,7 @@ def bhmie(x, refrel, nang):
     xstop = x + 4.*x**0.3333 + 2.0
     # xstop = x + 4.*x**0.3333 + 10.0
     nmx = max(xstop, ymod) + 15.0
-    nmx = fix(nmx)
+    nmx = int(nmx) #fix(nmx)
 
     # BTD experiment 91/1/15: add one more term to series and compare results
     #      NMX=AMAX1(XSTOP,YMOD)+16
@@ -66,17 +66,16 @@ def bhmie(x, refrel, nang):
 
     dang = .5*pii / (nang-1)
 
-    amu = arange(0.0, nang, 1)
-    amu = cos(amu*dang)
+    amu = np.arange(0.0, nang, 1)
+    amu = np.cos(amu*dang)
 
-    pi0 = zeros(nang, dtype=complex128)
-    pi1 = ones(nang, dtype=complex128)
-
+    pi0 = np.zeros(nang, dtype=np.complex128)
+    pi1 = np.ones(nang, dtype=np.complex128)
     # Logarithmic derivative D(J) calculated by downward recurrence
     # beginning with initial value (0.,0.) at J=NMX
 
     nn = int(nmx)-1
-    d = zeros(nn+1, dtype=complex128)
+    d = np.zeros(nn+1, dtype=np.complex128)
     for n in range(0, nn):
         en = nmx - n
         d[nn-n-1] = (en/y) - (1. / (d[nn-n]+en/y))
@@ -84,10 +83,10 @@ def bhmie(x, refrel, nang):
     # *** Riccati-Bessel functions with real argument X
     #     calculated by upward recurrence
 
-    psi0 = cos(dx)
-    psi1 = sin(dx)
-    chi0 = -sin(dx)
-    chi1 = cos(dx)
+    psi0 = np.cos(dx)
+    psi1 = np.sin(dx)
+    chi0 = -np.sin(dx)
+    chi1 = np.cos(dx)
     xi1 = psi1-chi1*1j
     qsca = 0.
     gsca = 0.
@@ -119,11 +118,11 @@ def bhmie(x, refrel, nang):
 
     # *** Augment sums for Qsca and g=<cos(theta)>
         qsca += (2.*en+1.) * (abs(an)**2+abs(bn)**2)
-        gsca += ((2.*en+1.) / (en * (en+1.)))*(real(an) * real(bn)+imag(an)*imag(bn))
+        gsca += ((2.*en+1.) / (en * (en+1.)))*(np.real(an) * np.real(bn)+np.imag(an)*np.imag(bn))
 
         if n > 0:
-            gsca += ((en-1.) * (en+1.)/en)*(real(an1) * real(an)+imag(an1)*imag(an)+real(bn1)
-                                            * real(bn)+imag(bn1)*imag(bn))
+            gsca += ((en-1.) * (en+1.)/en)*(np.real(an1) * np.real(an)+np.imag(an1)*np.imag(an)+np.real(bn1)
+                                            * np.real(bn)+np.imag(bn1)*np.imag(bn))
 
     # *** Now calculate scattering intensity pattern
     #     First do angles from 0 to 90
@@ -157,11 +156,11 @@ def bhmie(x, refrel, nang):
     #     Now compute QSCA,QEXT,QBACK,and GSCA
 
     #   we have to reverse the order of the elements of the second part of s1 and s2
-    s1 = concatenate((s1_1, s1_2[-2::-1]))
-    s2 = concatenate((s2_1, s2_2[-2::-1]))
+    s1 = np.concatenate((s1_1, s1_2[-2::-1]))
+    s2 = np.concatenate((s2_1, s2_2[-2::-1]))
     gsca = 2. * gsca / qsca
     qsca = (2. / (dx*dx)) * qsca
-    qext = (4. / (dx*dx)) * real(s1[0])
+    qext = (4. / (dx*dx)) * np.real(s1[0])
 
     # more common definition of the backscattering efficiency,
     # so that the backscattering cross section really
