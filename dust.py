@@ -54,8 +54,8 @@ class Dust:
 
         plt.loglog(self.data["wlen"], self.data["kappa"], label=postfix,
                    linestyle=linestyle, color=color, linewidth=linewidth)
-        plt.xlabel("$\\lambda$, $\\mu$m")
-        plt.ylabel("$\\kappa$, cm$^2$ g$^{-1}$")
+        plt.xlabel("$\\lambda$, $\\mu{\\rm m}$")
+        plt.ylabel("$\\kappa$, ${\\rm cm}^2 {\\rm g}^{-1}$")
         if xlim is not None:
             plt.xlim(xlim)
         if ylim is not None:
