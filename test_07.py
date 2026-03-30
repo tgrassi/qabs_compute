@@ -4,13 +4,16 @@ from qabsmanager import QabsManager
 from optical import Optical
 import numpy as np
 import matplotlib as mpl
+from matplotlib.ticker import FuncFormatter
 
 plt.rcParams['text.usetex'] = True
 mpl.rcParams['mathtext.fontset'] = 'stix'
 mpl.rcParams['font.family'] = 'STIXGeneral'
+mpl.rcParams['font.size'] = 16
+mpl.rcParams['xtick.labelsize'] = 14
+mpl.rcParams['ytick.labelsize'] = 14
 
 q = QabsManager()
-
 
 # load amorphous carbon optical data
 core_carbon = q.load_material("data/eps_carb_P93.dat", labels=["wlen", "real_m", "im_m"])
@@ -82,12 +85,11 @@ for ii, vratio in enumerate([4.5, 4.5, 4.5]):
     # get colormap viridis
     lab = ["This work, 8K", "This work, 120K", "This work, 150K"][ii]
 
-    lab = "${\\rm " + lab.replace(" ", "\\ ") + "}$"
+    lab_latex = "${\\rm " + lab.replace(" ", "\\ ") + "}$"
 
     # make composite materials (Si+ice and aC+ice)
     composite_silicate = q.make_optical([core_silicate, ice_mantle])
     composite_carbon = q.make_optical([core_carbon, ice_mantle])
-
 
     # define size ratio
     aratio = ((vratio + 1e0)**(1./3.) - 1e0)
@@ -101,17 +103,23 @@ for ii, vratio in enumerate([4.5, 4.5, 4.5]):
     composite_carbon.dust.rho_bulk = 2e0  # g/cm3
     composite_carbon.compute_kappa()
 
-
     # merge carbon and silicate opacities
     merged = q.merge_kappa([composite_silicate, composite_carbon], frac)
     merged.save_kappa("kappa_%s_%.1f.dat" % (lab, vratio))
 
+    # linear fit to log-log kappa to get power-law slope
+    this_kappa = merged.dust.data
+    log_wlen = np.log10(this_kappa["wlen"])
+    log_kappa = np.log10(this_kappa["kappa"])
+    coeffs = np.polyfit(log_wlen, log_kappa, 1)
+    print("Power-law fit: kappa = %.2e * (lambda / micron)^%.2f  (%s)" % (1e1**coeffs[1], coeffs[0], lab))
+
+    # uncomment to overplot the power-law fit
+    #plt.plot(1e1**log_wlen, 1e1**(coeffs[1] + coeffs[0] * log_wlen), linestyle="-", color="tab:red", alpha=0.5)
+
     # add opacity to plot
-    merged.add_plot_kappa("kappa.pdf", postfix="%s, $V$=$%.1f$" % (lab, vratio), color=None,
+    merged.add_plot_kappa("kappa.pdf", postfix="%s, $V$=$%.1f$" % (lab_latex, vratio), color=None,
                           linestyle=linestyle, linewidth=2, xlim=(1e2, 999.), ylim=(5e-1, 2e2))
-
-from matplotlib.ticker import FuncFormatter, ScalarFormatter
-
 
 clight = 2.99792458e10  # speed of light in cm/s
 
@@ -136,6 +144,9 @@ ax = plt.gca().secondary_xaxis('top', functions=(lambda x:clight / (x * 1e-4) / 
 ax.set_xlabel("$\\nu$, THz")
 ax.xaxis.set_major_formatter(mfmt2)
 ax.xaxis.set_minor_formatter(mfmt2)
+
+plt.ylim(2., 2e2)
+plt.xlim(1e2, 899)
 plt.tight_layout()
 plt.savefig("kappa.pdf")
 plt.show()
